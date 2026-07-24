@@ -1,0 +1,13 @@
+{
+  "name": "flightradar-local",
+  "version": "1.0.0",
+  "description": "Local flight radar with ADS-B data, real-time tracking and spotter tools",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

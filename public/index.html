@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>FlightRadar Local</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header id="top-bar">
+      <div class="top-left">
+        <span id="app-title">FlightRadar Local</span>
+        <span id="source-badge" class="badge">---</span>
+        <span id="range-badge" class="badge">250 NM</span>
+      </div>
+      <div class="top-center">
+        <div id="compass-mini" class="compass-mini">
+          <div class="compass-ring">
+            <span class="dir-n">N</span>
+            <span class="dir-e">E</span>
+            <span class="dir-s">S</span>
+            <span class="dir-w">W</span>
+          </div>
+          <div id="compass-needle" class="compass-needle"></div>
+        </div>
+      </div>
+      <div class="top-right">
+        <span id="clock"></span>
+        <button id="btn-screensaver" class="icon-btn" title="Screensaver">&#9673;</button>
+        <button id="btn-settings" class="icon-btn" title="Settings">&#9881;</button>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <div id="view-list" class="view active">
+        <div id="list-controls">
+          <label id="label-radius" for="radius-slider">Radius:</label>
+          <input type="range" id="radius-slider" min="10" max="250" value="250" step="5">
+          <span id="radius-value">250 NM</span>
+          <span id="flight-count">0 / 0</span>
+        </div>
+        <div id="flight-table-container">
+          <table id="flight-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th data-i18n="list.callsign">Callsign</th>
+                <th data-i18n="list.airline">Airline</th>
+                <th data-i18n="list.type">Type</th>
+                <th data-i18n="list.altitude">Altitude</th>
+                <th data-i18n="list.speed">Speed</th>
+                <th data-i18n="list.distance">Distance</th>
+                <th data-i18n="list.heading">Heading</th>
+              </tr>
+            </thead>
+            <tbody id="flight-list-body">
+            </tbody>
+          </table>
+        </div>
+        <div id="spotter-panel" class="hidden">
+          <div id="spotter-content">
+            <div id="spotter-airline-logo"></div>
+            <div id="spotter-info">
+              <h3 id="spotter-callsign"></h3>
+              <p id="spotter-route"></p>
+            </div>
+            <div id="spotter-compass-wrap">
+              <svg id="spotter-compass" viewBox="0 0 200 200"></svg>
+              <div id="spotter-elevation-label"></div>
+            </div>
+            <div id="spotter-prediction"></div>
+            <div id="spotter-details"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="view-details" class="view">
+        <div id="details-panel">
+          <div id="details-header">
+            <button id="btn-back-to-list" class="icon-btn" data-i18n="app.close">&larr;</button>
+            <h2 id="detail-callsign"></h2>
+          </div>
+          <div id="details-body">
+            <div id="detail-photo-wrap">
+              <img id="detail-photo" src="" alt="" />
+              <div id="detail-airline-logo-wrap"><img id="detail-airline-logo" src="" alt="" /></div>
+            </div>
+            <div id="detail-route-wrap">
+              <div class="route-endpoint">
+                <img id="detail-flag-from" class="flag-icon" src="" alt="" />
+                <span id="detail-from-city"></span>
+                <span id="detail-from-icao" class="code"></span>
+                <span id="detail-from-time" class="time"></span>
+              </div>
+              <div id="detail-progress-wrap">
+                <div id="detail-progress-bar"><div id="detail-progress-fill"></div></div>
+                <span id="detail-progress-pct"></span>
+              </div>
+              <div class="route-endpoint">
+                <img id="detail-flag-to" class="flag-icon" src="" alt="" />
+                <span id="detail-to-city"></span>
+                <span id="detail-to-icao" class="code"></span>
+                <span id="detail-to-time" class="time"></span>
+              </div>
+            </div>
+            <div id="detail-grid">
+              <div class="detail-item"><label data-i18n="details.airline">Airline</label><span id="detail-airline"></span></div>
+              <div class="detail-item"><label data-i18n="details.type">Type</label><span id="detail-type"></span></div>
+              <div class="detail-item"><label data-i18n="details.registration">Registration</label><span id="detail-reg"></span></div>
+              <div class="detail-item"><label data-i18n="details.altitude">Altitude</label><span id="detail-alt"></span></div>
+              <div class="detail-item"><label data-i18n="details.speed">Speed</label><span id="detail-speed"></span></div>
+              <div class="detail-item"><label data-i18n="details.heading">Heading</label><span id="detail-heading"></span></div>
+              <div class="detail-item"><label data-i18n="details.squawk">Squawk</label><span id="detail-squawk"></span></div>
+              <div class="detail-item"><label data-i18n="details.category">Category</label><span id="detail-category"></span></div>
+              <div class="detail-item"><label data-i18n="details.eta">ETA</label><span id="detail-eta"></span></div>
+              <div class="detail-item"><label data-i18n="details.icao24">ICAO24</label><span id="detail-icao"></span></div>
+            </div>
+            <div id="detail-route-map-wrap">
+              <div id="detail-route-map"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="view-radar" class="view">
+        <div id="radar-map"></div>
+        <div id="radar-overlay">
+          <div id="radar-info">
+            <span id="radar-flight-count">0 aircraft</span>
+            <span id="radar-source">---</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="view-stats" class="view">
+        <div id="stats-panel">
+          <h2 data-i18n="stats.title">Session Statistics</h2>
+          <div id="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value" id="stat-total">0</div>
+              <div class="stat-label" data-i18n="stats.totalFlights">Total Flights</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="stat-unique">0</div>
+              <div class="stat-label" data-i18n="stats.uniqueAircraft">Unique Aircraft</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="stat-avg-alt">0</div>
+              <div class="stat-label" data-i18n="stats.avgAltitude">Avg Altitude</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="stat-max-speed">0</div>
+              <div class="stat-label" data-i18n="stats.maxSpeed">Max Speed</div>
+            </div>
+          </div>
+          <div id="stats-extra-grid">
+            <div class="stat-card wide">
+              <h3 data-i18n="stats.hourlyChart">Hourly Activity</h3>
+              <canvas id="hourly-chart"></canvas>
+            </div>
+            <div class="stat-card">
+              <h3 data-i18n="stats.topAirlines">Top Airlines</h3>
+              <div id="top-airlines"></div>
+            </div>
+            <div class="stat-card">
+              <h3 data-i18n="stats.dailyRecords">Daily Records</h3>
+              <div id="daily-records"></div>
+            </div>
+            <div class="stat-card wide">
+              <h3 data-i18n="stats.metar">METAR Data</h3>
+              <pre id="metar-display">---</pre>
+            </div>
+          </div>
+          <div id="stats-session-info">
+            <span><strong data-i18n="stats.sessionStart">Session Start</strong>: <span id="stat-session-start"></span></span>
+            <span><strong data-i18n="stats.duration">Duration</strong>: <span id="stat-duration"></span></span>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <nav id="bottom-nav">
+      <button class="nav-btn active" data-view="list" data-i18n="nav.list">
+        <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3zm0 7h18v2H3zm0 7h18v2H3z"/></svg>
+        <span>List</span>
+      </button>
+      <button class="nav-btn" data-view="radar" data-i18n="nav.radar">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.6"/><circle cx="12" cy="12" r="2" fill="currentColor"/><line x1="12" y1="2" x2="12" y2="6" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span>Radar</span>
+      </button>
+      <button class="nav-btn" data-view="stats" data-i18n="nav.stats">
+        <svg viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg>
+        <span>Stats</span>
+      </button>
+    </nav>
+
+    <div id="screensaver-overlay" class="hidden">
+      <canvas id="screensaver-canvas"></canvas>
+      <div id="screensaver-hud">
+        <div id="ss-clock"></div>
+        <div id="ss-weather"></div>
+        <div id="ss-info"></div>
+      </div>
+      <div id="ss-hint" data-i18n="screensaver.tapToExit">Tap to exit</div>
+    </div>
+
+    <div id="settings-overlay" class="hidden">
+      <div id="settings-panel">
+        <div id="settings-header">
+          <h2 data-i18n="settings.title">Settings</h2>
+          <button id="btn-close-settings" class="icon-btn" data-i18n="app.close">&times;</button>
+        </div>
+        <div id="settings-body">
+          <section class="settings-section">
+            <h3 data-i18n="settings.general">General</h3>
+            <div class="setting-row">
+              <label data-i18n="settings.language">Language</label>
+              <select id="setting-language">
+                <option value="en">English</option>
+                <option value="pl">Polski</option>
+              </select>
+            </div>
+            <div class="setting-row">
+              <label data-i18n="settings.units">Units</label>
+              <select id="setting-units">
+                <option value="metric" data-i18n="settings.metric">Metric</option>
+                <option value="imperial" data-i18n="settings.imperial">Imperial</option>
+              </select>
+            </div>
+            <div class="setting-row">
+              <label data-i18n="settings.radius">Tracking Radius</label>
+              <input type="range" id="setting-radius" min="10" max="250" value="250" step="5">
+              <span id="setting-radius-val">250 NM</span>
+            </div>
+            <div class="setting-row">
+              <label data-i18n="settings.refreshRate">Refresh Rate</label>
+              <select id="setting-refresh">
+                <option value="5">5 s</option>
+                <option value="8" selected>8 s</option>
+                <option value="10">10 s</option>
+                <option value="15">15 s</option>
+                <option value="30">30 s</option>
+              </select>
+            </div>
+          </section>
+          <section class="settings-section">
+            <h3 data-i18n="settings.appearance">Appearance</h3>
+            <div class="setting-row">
+              <label data-i18n="settings.nightMode">Night Mode</label>
+              <label class="switch">
+                <input type="checkbox" id="setting-night">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="setting-row">
+              <label data-i18n="settings.colorTheme">Color Theme</label>
+              <div id="theme-selector" class="theme-grid"></div>
+            </div>
+            <div class="setting-row">
+              <label data-i18n="settings.idleTimeout">Screensaver Timeout</label>
+              <select id="setting-idle">
+                <option value="0">Off</option>
+                <option value="60">1 min</option>
+                <option value="120" selected>2 min</option>
+                <option value="300">5 min</option>
+                <option value="600">10 min</option>
+              </select>
+            </div>
+          </section>
+          <section class="settings-section">
+            <h3 data-i18n="settings.data">Data Source</h3>
+            <div class="setting-row">
+              <label data-i18n="settings.localReceiver">Local Receiver</label>
+              <label class="switch">
+                <input type="checkbox" id="setting-local">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="setting-row">
+              <label data-i18n="settings.localReceiverUrl">Receiver URL</label>
+              <input type="text" id="setting-receiver-url" placeholder="http://192.168.1.100" value="">
+            </div>
+            <div class="setting-row">
+              <label data-i18n="settings.flightAwareKey">FlightAware API Key</label>
+              <input type="password" id="setting-fa-key" placeholder="Optional">
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast-container"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
