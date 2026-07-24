@@ -52,7 +52,8 @@ const state = {
   radarCircle: null,
   myLocationMarker: null,
   metarData: null,
-  translations: { en: {}, pl: {} }
+  translations: { en: {}, pl: {} },
+  routeCache: {}
 };
 
 let t = (key) => {
@@ -533,6 +534,13 @@ function processFlights() {
   if (state.selectedFlight) updateDetailPanel(state.selectedFlight);
   if (state.selectedFlight && state.currentView === 'radar') updateRadarSidebar();
   updateFlightCount();
+
+  const displayed = state.flights.slice(0, MAX_DISPLAYED);
+  const callsigns = displayed.map(f => f.flight).filter(Boolean);
+  fetchRoutesBatch(callsigns).then(() => {
+    if (state.currentView === 'list') renderFlightList();
+    if (state.selectedFlight && state.currentView === 'radar') updateRadarSidebar();
+  });
 }
 
 function calcElevation(altFt, distKm) {
@@ -573,6 +581,44 @@ function getFlightCallsign(f) {
   return f.flight || f.hex.toUpperCase();
 }
 
+async function fetchRoute(callsign) {
+  const key = (callsign || '').trim().toUpperCase();
+  if (!key || state.routeCache[key] !== undefined) return state.routeCache[key];
+  try {
+    const data = await fetchJSON(`/api/route/${key}`);
+    state.routeCache[key] = data;
+    return data;
+  } catch {
+    state.routeCache[key] = null;
+    return null;
+  }
+}
+
+async function fetchRoutesBatch(callsigns) {
+  const toFetch = callsigns.filter(cs => {
+    const key = (cs || '').trim().toUpperCase();
+    return key && state.routeCache[key] === undefined;
+  });
+  if (toFetch.length === 0) return;
+  try {
+    const data = await fetchJSON(`/api/routes-batch?callsigns=${toFetch.join(',')}`);
+    toFetch.forEach(cs => {
+      const key = cs.trim().toUpperCase();
+      state.routeCache[key] = data[key] || null;
+    });
+  } catch {}
+}
+
+function getRouteDisplay(f) {
+  const key = (f.flight || '').trim().toUpperCase();
+  const r = state.routeCache[key];
+  if (!r) return null;
+  const from = r.origin?.iata || r.origin?.icao || null;
+  const to = r.destination?.iata || r.destination?.icao || null;
+  if (!from && !to) return null;
+  return { from, to, origin: r.origin, destination: r.destination };
+}
+
 function getAirlineInfo(f) {
   const name = getAirlineName(f.ownOp, f.flight);
   const icao = (f.flight || '').substring(0, 3);
@@ -584,7 +630,7 @@ function renderFlightList() {
   const displayed = state.flights.slice(0, MAX_DISPLAYED);
 
   if (displayed.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--fg3)">${t('list.noFlights')}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--fg3)">${t('list.noFlights')}</td></tr>`;
     return;
   }
 
@@ -610,6 +656,16 @@ function renderFlightList() {
     row.innerHTML = '';
     row.appendChild(logoTd);
     row.appendChild(h('td', { class:'callsign-cell', text: getFlightCallsign(f) }));
+
+    const routeDisplay = getRouteDisplay(f);
+    const routeTd = h('td', { class:'route-cell' });
+    if (routeDisplay) {
+      routeTd.textContent = `${routeDisplay.from} \u2192 ${routeDisplay.to}`;
+    } else {
+      routeTd.textContent = '---';
+    }
+    row.appendChild(routeTd);
+
     row.appendChild(h('td', { text: airline.name }));
     row.appendChild(h('td', { text: f.t || '---', title: f.t }));
     row.appendChild(h('td', { class:'alt-cell', html: `<span class="alt-arrow alt-${altDir}">${arrowChar}</span> ${formatAltitude(f.alt_baro, state.units)}` }));
@@ -631,6 +687,15 @@ function selectFlight(f) {
   updateCompass(f.track);
   if (state.currentView === 'radar') showRadarSidebar(f);
   centerMapOnFlight(f);
+
+  if (f.flight) {
+    fetchRoute(f.flight).then(route => {
+      if (state.selectedFlight?.hex === f.hex) {
+        if (state.currentView === 'radar') updateRadarSidebar();
+        renderFlightList();
+      }
+    });
+  }
 }
 
 function centerMapOnFlight(f) {
@@ -695,14 +760,15 @@ function showRadarSidebar(f) {
   }
 
   const routeEl = document.getElementById('rsb-route');
-  const fromCity = f.origin?.name || f.origin?.icao || '---';
-  const toCity = f.destination?.name || f.destination?.icao || '---';
-  const fromIcao = f.origin?.icao || '';
-  const toIcao = f.destination?.icao || '';
+  const routeDisplay = getRouteDisplay(f);
+  const fromIcao = routeDisplay?.origin?.icao || f.origin?.icao || '';
+  const fromName = routeDisplay?.origin?.name || f.origin?.name || fromIcao || '---';
+  const toIcao = routeDisplay?.destination?.icao || f.destination?.icao || '';
+  const toName = routeDisplay?.destination?.name || f.destination?.name || toIcao || '---';
   routeEl.innerHTML = `
-    <div class="rsb-route-from"><span class="rsb-route-icao">${fromIcao || '---'}</span><span class="rsb-route-city">${fromCity}</span></div>
+    <div class="rsb-route-from"><span class="rsb-route-icao">${fromIcao || '---'}</span><span class="rsb-route-city">${fromName}</span></div>
     <span class="rsb-route-arrow">\u2708\uFE0F \u2192</span>
-    <div class="rsb-route-to"><span class="rsb-route-icao">${toIcao || '---'}</span><span class="rsb-route-city">${toCity}</span></div>
+    <div class="rsb-route-to"><span class="rsb-route-icao">${toIcao || '---'}</span><span class="rsb-route-city">${toName}</span></div>
   `;
 
   document.getElementById('rsb-type').textContent = f.t || '---';

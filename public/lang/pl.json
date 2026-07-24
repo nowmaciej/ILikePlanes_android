@@ -30,6 +30,7 @@
     "speed": "Prędkość",
     "distance": "Odległość",
     "callsign": "Znak wywoławczy",
+    "route": "Trasa",
     "reg": "Rejestracja",
     "heading": "Kurs",
     "noFlights": "Brak lotów w zasięgu",

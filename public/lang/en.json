@@ -30,6 +30,7 @@
     "speed": "Speed",
     "distance": "Distance",
     "callsign": "Callsign",
+    "route": "Route",
     "reg": "Registration",
     "heading": "Heading",
     "noFlights": "No flights in range",
