@@ -134,6 +134,34 @@
             <span id="radar-source">---</span>
           </div>
         </div>
+        <div id="radar-sidebar" class="radar-sidebar hidden">
+          <button id="radar-sidebar-close" class="radar-sidebar-close">&times;</button>
+          <div id="radar-sidebar-content">
+            <div id="rsb-photo-wrap">
+              <img id="rsb-photo" src="" alt="" />
+            </div>
+            <h3 id="rsb-callsign"></h3>
+            <p id="rsb-airline" class="rsb-sub"></p>
+            <div id="rsb-route" class="rsb-route"></div>
+            <div class="rsb-grid">
+              <div class="rsb-item"><label data-i18n="details.type">Type</label><span id="rsb-type"></span></div>
+              <div class="rsb-item"><label data-i18n="details.registration">Registration</label><span id="rsb-reg"></span></div>
+              <div class="rsb-item"><label data-i18n="details.altitude">Altitude</label><span id="rsb-alt"></span></div>
+              <div class="rsb-item"><label data-i18n="details.speed">Speed</label><span id="rsb-speed"></span></div>
+              <div class="rsb-item"><label data-i18n="details.heading">Heading</label><span id="rsb-heading"></span></div>
+              <div class="rsb-item"><label data-i18n="details.squawk">Squawk</label><span id="rsb-squawk"></span></div>
+              <div class="rsb-item"><label data-i18n="details.category">Category</label><span id="rsb-category"></span></div>
+              <div class="rsb-item"><label data-i18n="details.icao24">ICAO24</label><span id="rsb-icao"></span></div>
+              <div class="rsb-item"><label data-i18n="spotter.distance">Distance</label><span id="rsb-distance"></span></div>
+              <div class="rsb-item"><label data-i18n="spotter.bearing">Bearing</label><span id="rsb-bearing"></span></div>
+            </div>
+            <div id="rsb-spotter-mini">
+              <svg id="rsb-compass" viewBox="0 0 200 200"></svg>
+              <div id="rsb-elevation"></div>
+            </div>
+            <div id="rsb-prediction"></div>
+          </div>
+        </div>
       </div>
 
       <div id="view-stats" class="view">

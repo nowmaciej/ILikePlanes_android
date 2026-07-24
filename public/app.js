@@ -531,6 +531,7 @@ function processFlights() {
   renderFlightList();
   if (state.currentView === 'radar') updateRadarMap();
   if (state.selectedFlight) updateDetailPanel(state.selectedFlight);
+  if (state.selectedFlight && state.currentView === 'radar') updateRadarSidebar();
   updateFlightCount();
 }
 
@@ -628,6 +629,14 @@ function selectFlight(f) {
   renderFlightList();
   showSpotterPanel(f);
   updateCompass(f.track);
+  if (state.currentView === 'radar') showRadarSidebar(f);
+  centerMapOnFlight(f);
+}
+
+function centerMapOnFlight(f) {
+  if (state.map && f.lat && f.lon) {
+    state.map.panTo([f.lat, f.lon], { animate: true });
+  }
 }
 
 function showSpotterPanel(f) {
@@ -665,6 +674,91 @@ function showSpotterPanel(f) {
     `${t('details.altitude')}: ${formatAltitude(f.alt_baro, state.units)}`,
     `${t('details.speed')}: ${formatSpeed(f.gs, state.units)}`
   ].join(' \u2022 ');
+}
+
+function showRadarSidebar(f) {
+  const sidebar = document.getElementById('radar-sidebar');
+  sidebar.classList.remove('hidden');
+
+  const airline = getAirlineInfo(f);
+  const callsign = getFlightCallsign(f);
+
+  document.getElementById('rsb-callsign').textContent = callsign;
+  document.getElementById('rsb-airline').textContent = `${airline.name} ${f.t ? '(' + f.t + ')' : ''}`;
+
+  const photo = document.getElementById('rsb-photo');
+  if (f.r) {
+    photo.src = planespottersPhoto(f.r);
+    photo.onerror = function() { this.src = 'https://placehold.co/340x120/1a2332/64748b?text=Aircraft'; };
+  } else {
+    photo.src = 'https://placehold.co/340x120/1a2332/64748b?text=Aircraft';
+  }
+
+  const routeEl = document.getElementById('rsb-route');
+  const fromCity = f.origin?.name || f.origin?.icao || '---';
+  const toCity = f.destination?.name || f.destination?.icao || '---';
+  const fromIcao = f.origin?.icao || '';
+  const toIcao = f.destination?.icao || '';
+  routeEl.innerHTML = `
+    <div class="rsb-route-from"><span class="rsb-route-icao">${fromIcao || '---'}</span><span class="rsb-route-city">${fromCity}</span></div>
+    <span class="rsb-route-arrow">\u2708\uFE0F \u2192</span>
+    <div class="rsb-route-to"><span class="rsb-route-icao">${toIcao || '---'}</span><span class="rsb-route-city">${toCity}</span></div>
+  `;
+
+  document.getElementById('rsb-type').textContent = f.t || '---';
+  document.getElementById('rsb-reg').textContent = f.r || '---';
+  document.getElementById('rsb-alt').textContent = formatAltitude(f.alt_baro, state.units);
+  document.getElementById('rsb-speed').textContent = formatSpeed(f.gs, state.units);
+  document.getElementById('rsb-heading').textContent = f.track != null ? `${Math.round(f.track)}\u00B0 ${bearingToCardinal(f.track)}` : '---';
+  document.getElementById('rsb-squawk').textContent = f.squawk || '---';
+  document.getElementById('rsb-category').textContent = f._categoryLabel || f.category || '---';
+  document.getElementById('rsb-icao').textContent = f.hex || '---';
+  document.getElementById('rsb-distance').textContent = f._distance != null ? formatDistance(f._distance) : '---';
+  document.getElementById('rsb-bearing').textContent = f._bearing != null ? `${Math.round(f._bearing)}\u00B0 ${bearingToCardinal(f._bearing)}` : '---';
+
+  drawSidebarCompass(f._bearing || 0, f._elevation || 0);
+
+  const pred = predictFlyover(f);
+  const predEl = document.getElementById('rsb-prediction');
+  if (pred) {
+    predEl.textContent = `${t('spotter.flyover')} ~${pred.minutes} ${t('spotter.minutes')} ${t('spotter.at')} ${pred.distance}`;
+  } else {
+    predEl.textContent = '';
+  }
+}
+
+function drawSidebarCompass(bearingDeg, elevationDeg) {
+  const svg = document.getElementById('rsb-compass');
+  const cx = 100, cy = 100, r = 85;
+  let html = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--border2)" stroke-width="2"/>`;
+  for (let i = 0; i < 360; i += 30) {
+    const rad = degToRad(i - 90);
+    const x1 = cx + (r-6)*Math.cos(rad), y1 = cy + (r-6)*Math.sin(rad);
+    const x2 = cx + r*Math.cos(rad), y2 = cy + r*Math.sin(rad);
+    html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--fg3)" stroke-width="1"/>`;
+  }
+  const needleRad = degToRad(bearingDeg - 90);
+  const nx = cx + 60*Math.cos(needleRad), ny = cy + 60*Math.sin(needleRad);
+  html += `<line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="var(--danger)" stroke-width="3" stroke-linecap="round"/>`;
+  html += `<circle cx="${cx}" cy="${cy}" r="4" fill="var(--accent)"/>`;
+  ['N','E','S','W'].forEach((d,i) => {
+    const angle = i * 90 - 90;
+    const rad = degToRad(angle);
+    const tx = cx + (r-18)*Math.cos(rad), ty = cy + (r-18)*Math.sin(rad);
+    html += `<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central" fill="var(--fg2)" font-size="10" font-weight="600">${d}</text>`;
+  });
+  svg.innerHTML = html;
+  document.getElementById('rsb-elevation').textContent = `${elevationDeg.toFixed(1)}\u00B0 ${t('spotter.elevation')}`;
+}
+
+function hideRadarSidebar() {
+  document.getElementById('radar-sidebar').classList.add('hidden');
+}
+
+function updateRadarSidebar() {
+  if (!state.selectedFlight) return;
+  const f = state.flights.find(flight => flight.hex === state.selectedFlight.hex);
+  if (f) showRadarSidebar(f);
 }
 
 function drawSpotterCompass(bearingDeg, elevationDeg) {
@@ -1024,6 +1118,7 @@ async function fetchMETAR() {
 
 function switchView(view) {
   if (view === 'radar') initRadarMap();
+  if (view !== 'radar') hideRadarSidebar();
 
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(`view-${view}`).classList.add('active');
@@ -1193,6 +1288,8 @@ function initNavigation() {
     renderFlightList();
   });
 
+  document.getElementById('radar-sidebar-close').addEventListener('click', hideRadarSidebar);
+
   document.getElementById('radius-slider').addEventListener('input', e => {
     state.radius = parseInt(e.target.value);
     document.getElementById('radius-value').textContent = `${state.radius} NM`;
@@ -1207,6 +1304,9 @@ function initNavigation() {
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       if (state.screensaverActive) deactivateScreensaver();
+      else if (!document.getElementById('radar-sidebar').classList.contains('hidden')) {
+        hideRadarSidebar();
+      }
       else if (!document.getElementById('settings-overlay').classList.contains('hidden')) {
         document.getElementById('settings-overlay').classList.add('hidden');
         saveSettings();
