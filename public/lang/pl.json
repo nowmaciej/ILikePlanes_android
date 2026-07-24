@@ -126,7 +126,18 @@
     "font": "Czcionka",
     "ui": "Interfejs",
     "english": "Angielski",
-    "polish": "Polski"
+    "polish": "Polski",
+    "location": "Lokalizacja",
+    "locationMode": "Tryb Lokalizacji",
+    "locationAuto": "Automatyczna (GPS)",
+    "locationManual": "Ręczna",
+    "citySearch": "Szukaj miasta...",
+    "setLocation": "Ustaw Lokalizację",
+    "useGps": "Użyj GPS",
+    "currentLocation": "Bieżąca lokalizacja",
+    "noResults": "Brak wyników",
+    "searching": "Szukanie...",
+    "locationSet": "Lokalizacja ustawiona na"
   },
   "themes": {
     "default": "Domyślny",

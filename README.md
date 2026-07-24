@@ -13,6 +13,7 @@ A local flight radar application with real-time ADS-B tracking, spotter tools, a
 - **Night Mode** - Reduced brightness for dark environments
 - **Bilingual UI** - English and Polish language support
 - **Touch Optimized** - Responsive design for touchscreen devices
+- **Manual Location** - Set location manually with city search (Nominatim geocoding)
 
 ## Data Sources
 
@@ -57,6 +58,7 @@ Access via gear icon in top-right corner:
 - **Local Receiver** - Enable/disable local ADS-B receiver
 - **Receiver URL** - Local receiver address (e.g., http://192.168.1.100)
 - **FlightAware API Key** - Optional key for enhanced flight data
+- **Location Mode** - Auto (GPS) or Manual with city search
 
 ## Project Structure
 

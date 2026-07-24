@@ -32,6 +32,8 @@ const state = {
   receiverUrl: '',
   faKey: '',
   position: null,
+  locationMode: 'auto',
+  manualLocation: null,
   flights: [],
   selectedFlight: null,
   currentView: 'list',
@@ -240,6 +242,9 @@ function loadSettings() {
   state.localReceiver = saved('local', 'false') === 'true';
   state.receiverUrl = saved('receiver-url', '');
   state.faKey = saved('fa-key', '');
+  state.locationMode = saved('location-mode', 'auto');
+  const ml = saved('manual-location', null);
+  state.manualLocation = ml ? JSON.parse(ml) : null;
 }
 
 function saveSettings() {
@@ -254,6 +259,8 @@ function saveSettings() {
   set('local', state.localReceiver);
   set('receiver-url', state.receiverUrl);
   set('fa-key', state.faKey);
+  set('location-mode', state.locationMode);
+  set('manual-location', state.manualLocation ? JSON.stringify(state.manualLocation) : '');
 }
 
 function initSettings() {
@@ -320,6 +327,131 @@ function initSettings() {
   document.getElementById('setting-fa-key').addEventListener('input', e => {
     state.faKey = e.target.value; saveSettings();
   });
+
+  const locMode = document.getElementById('setting-location-mode');
+  const manualSection = document.getElementById('manual-location-section');
+  locMode.value = state.locationMode;
+  manualSection.classList.toggle('hidden', state.locationMode === 'auto');
+  updateLocationDisplay();
+
+  locMode.addEventListener('change', e => {
+    state.locationMode = e.target.value;
+    manualSection.classList.toggle('hidden', state.locationMode === 'auto');
+    saveSettings();
+    if (state.locationMode === 'manual' && state.manualLocation) {
+      applyManualPosition(state.manualLocation.lat, state.manualLocation.lon, state.manualLocation.name);
+    } else if (state.locationMode === 'auto') {
+      initGeolocation();
+    }
+  });
+
+  document.getElementById('btn-use-gps').addEventListener('click', () => {
+    state.locationMode = 'auto';
+    state.manualLocation = null;
+    locMode.value = 'auto';
+    manualSection.classList.add('hidden');
+    saveSettings();
+    initGeolocation();
+    toast(t('settings.locationAuto'), 'success');
+  });
+
+  const searchInput = document.getElementById('setting-city-search');
+  const resultsContainer = document.getElementById('city-search-results');
+  let searchDebounce = null;
+
+  searchInput.addEventListener('input', e => {
+    const query = e.target.value.trim();
+    clearTimeout(searchDebounce);
+    if (query.length < 2) {
+      resultsContainer.classList.add('hidden');
+      return;
+    }
+    resultsContainer.innerHTML = `<div class="city-search-loading">${t('settings.searching')}</div>`;
+    resultsContainer.classList.remove('hidden');
+    searchDebounce = setTimeout(() => searchCity(query), 400);
+  });
+
+  searchInput.addEventListener('focus', () => {
+    if (searchInput.value.trim().length >= 2) resultsContainer.classList.remove('hidden');
+  });
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.location-search-wrap')) resultsContainer.classList.add('hidden');
+  });
+
+  searchInput.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      resultsContainer.classList.add('hidden');
+      searchInput.blur();
+    }
+  });
+}
+
+async function searchCity(query) {
+  const resultsContainer = document.getElementById('city-search-results');
+  try {
+    const encoded = encodeURIComponent(query);
+    const url = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=8&addressdetails=1&accept-language=${state.lang}`;
+    const res = await fetch(url, { headers: { 'User-Agent': 'FlightRadarLocal/1.0' } });
+    const data = await res.json();
+
+    if (!data.length) {
+      resultsContainer.innerHTML = `<div class="city-search-loading">${t('settings.noResults')}</div>`;
+      return;
+    }
+
+    resultsContainer.innerHTML = '';
+    data.forEach(place => {
+      const name = place.display_name.split(',').slice(0, 2).join(',');
+      const country = place.address?.country || '';
+      const item = h('div', { class: 'city-search-item', onClick: () => selectCity(place) });
+      item.innerHTML = `<span class="city-name">${name}</span><span class="city-country">${country}</span><span class="city-coords">${parseFloat(place.lat).toFixed(4)}, ${parseFloat(place.lon).toFixed(4)}</span>`;
+      resultsContainer.appendChild(item);
+    });
+  } catch (err) {
+    resultsContainer.innerHTML = `<div class="city-search-loading">${t('app.error')}</div>`;
+  }
+}
+
+function selectCity(place) {
+  const lat = parseFloat(place.lat);
+  const lon = parseFloat(place.lon);
+  const name = place.display_name.split(',').slice(0, 2).join(',');
+
+  state.manualLocation = { lat, lon, name };
+  state.locationMode = 'manual';
+  document.getElementById('setting-location-mode').value = 'manual';
+  document.getElementById('manual-location-section').classList.remove('hidden');
+  document.getElementById('setting-city-search').value = '';
+  document.getElementById('city-search-results').classList.add('hidden');
+  saveSettings();
+  applyManualPosition(lat, lon, name);
+  toast(`${t('settings.locationSet')}: ${name}`, 'success');
+}
+
+function applyManualPosition(lat, lon, name) {
+  state.position = { lat, lon };
+  updateLocationDisplay();
+  if (state.map) {
+    state.map.setView([lat, lon], 8);
+    if (state.myLocationMarker) state.myLocationMarker.setLatLng([lat, lon]);
+    if (state.radarCircle) {
+      state.radarCircle.setLatLng([lat, lon]);
+    }
+  }
+  fetchFlights();
+}
+
+function updateLocationDisplay() {
+  const display = document.getElementById('current-location-display');
+  if (!display) return;
+  if (state.locationMode === 'manual' && state.manualLocation) {
+    display.textContent = state.manualLocation.name || `${state.manualLocation.lat.toFixed(4)}, ${state.manualLocation.lon.toFixed(4)}`;
+  } else if (state.position) {
+    display.textContent = `${state.position.lat.toFixed(4)}, ${state.position.lon.toFixed(4)}`;
+  } else {
+    display.textContent = '---';
+  }
 }
 
 async function fetchFlights() {
@@ -345,8 +477,8 @@ async function fetchFlights() {
     updateSourceBadge();
     processFlights();
   } catch(err) {
-    console.error('Fetch error:', err);
-    toast(t('app.error'), 'error');
+    console.warn('Fetch failed, keeping last state:', err.message);
+    document.getElementById('source-badge').textContent = state.source + ' \u26A0';
   }
 }
 
@@ -1084,6 +1216,12 @@ function initNavigation() {
 }
 
 function initGeolocation() {
+  if (state.locationMode === 'manual' && state.manualLocation) {
+    state.position = { lat: state.manualLocation.lat, lon: state.manualLocation.lon };
+    updateLocationDisplay();
+    fetchFlights();
+    return;
+  }
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       pos => {
@@ -1115,6 +1253,7 @@ async function init() {
   updateClock();
   setInterval(updateClock, 1000);
   setInterval(() => updateScreensaverHUD(), 1000);
+  setInterval(updateLocationDisplay, 5000);
   initGeolocation();
   startRefresh();
   resetIdleTimer();

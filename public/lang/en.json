@@ -126,7 +126,18 @@
     "font": "Font",
     "ui": "Interface",
     "english": "English",
-    "polish": "Polish"
+    "polish": "Polish",
+    "location": "Location",
+    "locationMode": "Location Mode",
+    "locationAuto": "Auto (GPS)",
+    "locationManual": "Manual",
+    "citySearch": "Search city...",
+    "setLocation": "Set Location",
+    "useGps": "Use GPS",
+    "currentLocation": "Current location",
+    "noResults": "No results found",
+    "searching": "Searching...",
+    "locationSet": "Location set to"
   },
   "themes": {
     "default": "Default",

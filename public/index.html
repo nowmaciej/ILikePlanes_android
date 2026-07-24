@@ -272,6 +272,33 @@
             </div>
           </section>
           <section class="settings-section">
+            <h3 data-i18n="settings.location">Location</h3>
+            <div class="setting-row">
+              <label data-i18n="settings.locationMode">Location Mode</label>
+              <select id="setting-location-mode">
+                <option value="auto" data-i18n="settings.locationAuto">Auto (GPS)</option>
+                <option value="manual" data-i18n="settings.locationManual">Manual</option>
+              </select>
+            </div>
+            <div id="manual-location-section" class="hidden">
+              <div class="setting-row">
+                <label data-i18n="settings.citySearch">Search city...</label>
+                <div class="location-search-wrap">
+                  <input type="text" id="setting-city-search" placeholder="Warszawa, Berlin, London..." autocomplete="off">
+                  <div id="city-search-results" class="city-search-results hidden"></div>
+                </div>
+              </div>
+              <div class="setting-row">
+                <label data-i18n="settings.currentLocation">Current location</label>
+                <span id="current-location-display" class="location-display">---</span>
+              </div>
+              <div class="setting-row">
+                <label></label>
+                <button id="btn-use-gps" class="btn-secondary" data-i18n="settings.useGps">Use GPS</button>
+              </div>
+            </div>
+          </section>
+          <section class="settings-section">
             <h3 data-i18n="settings.data">Data Source</h3>
             <div class="setting-row">
               <label data-i18n="settings.localReceiver">Local Receiver</label>
