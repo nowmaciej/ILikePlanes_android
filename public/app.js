@@ -688,11 +688,15 @@ function renderFlightList() {
 }
 
 function selectFlight(f) {
+  const prevHex = state.selectedFlight?.hex;
   state.selectedFlight = f;
   renderFlightList();
   showSpotterPanel(f);
   updateCompass(f.track);
-  if (state.currentView === 'radar') showRadarSidebar(f);
+  if (state.currentView === 'radar') {
+    showRadarSidebar(f);
+    highlightRadarMarker(prevHex, f.hex);
+  }
   centerMapOnFlight(f);
 
   if (f.flight) {
@@ -703,6 +707,30 @@ function selectFlight(f) {
       }
     });
   }
+}
+
+function highlightRadarMarker(prevHex, newHex) {
+  if (!state.map) return;
+  function styleMarker(hex, selected) {
+    const marker = state.radarMarkers[hex];
+    if (!marker) return;
+    const iconEl = marker.getElement();
+    if (!iconEl) return;
+    const inner = iconEl.querySelector('.radar-plane-icon');
+    if (!inner) return;
+    const f = state.flights.find(fl => fl.hex === hex);
+    if (!f) return;
+    inner.style.transform = `rotate(${f.track || 0}deg) scale(${selected ? 1.6 : 1})`;
+    inner.style.color = selected ? 'var(--danger)' : 'var(--accent)';
+    inner.style.filter = selected ? 'drop-shadow(0 0 6px var(--danger))' : 'none';
+    if (selected) {
+      marker.getElement()?.classList.add('radar-plane-selected');
+    } else {
+      marker.getElement()?.classList.remove('radar-plane-selected');
+    }
+  }
+  if (prevHex && prevHex !== newHex) styleMarker(prevHex, false);
+  if (newHex) styleMarker(newHex, true);
 }
 
 function centerMapOnFlight(f) {
@@ -1016,8 +1044,10 @@ function initRadarMap() {
   }
 
   state.map.on('click', () => {
+    const prevHex = state.selectedFlight?.hex;
     state.selectedFlight = null;
     hideRadarSidebar();
+    highlightRadarMarker(prevHex, null);
     renderFlightList();
   });
 }
