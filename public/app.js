@@ -853,7 +853,11 @@ function drawSidebarCompass(bearingDeg, elevationDeg) {
 }
 
 function hideRadarSidebar() {
+  const prevHex = state.selectedFlight?.hex;
+  state.selectedFlight = null;
   document.getElementById('radar-sidebar').classList.add('hidden');
+  highlightRadarMarker(prevHex, null);
+  renderFlightList();
 }
 
 function updateRadarSidebar() {
