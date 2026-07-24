@@ -11,9 +11,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 const ADSB_SOURCES = [
-  { name: 'airplanes.live', url: 'https://api.airplanes.live/v2', priority: 1 },
-  { name: 'adsb.lol', url: 'https://api.adsb.lol/v2', priority: 2 },
-  { name: 'adsb.fi', url: 'https://api.adsb.fi/v1', priority: 3 }
+  { name: 'airplanes.live', url: 'https://api.airplanes.live/v2', endpoint: '/point/{lat}/{lon}/{dist}', priority: 1 },
+  { name: 'adsb.lol', url: 'https://api.adsb.lol/v2', endpoint: '/lat/{lat}/lon/{lon}/dist/{dist}', priority: 2 },
+  { name: 'adsb.fi', url: 'https://opendata.adsb.fi/api/v3', endpoint: '/lat/{lat}/lon/{lon}/dist/{dist}', priority: 3 }
 ];
 
 let activeSource = ADSB_SOURCES[0];
@@ -40,22 +40,10 @@ function fetchUrl(targetUrl, timeout = 8000) {
   });
 }
 
-function normalizeResponse(raw, source) {
-  if (source.name === 'airplanes.live') {
-    if (raw.ac) return raw.ac.map(normalizeAircraft);
-    if (raw.data) return raw.data.map(normalizeAircraft);
-    if (Array.isArray(raw)) return raw.map(normalizeAircraft);
-  }
-  if (source.name === 'adsb.lol') {
-    if (raw.ac) return raw.ac.map(normalizeAircraft);
-    if (raw.data) return raw.data.map(normalizeAircraft);
-    if (Array.isArray(raw)) return raw.map(normalizeAircraft);
-  }
-  if (source.name === 'adsb.fi') {
-    if (raw.ac) return raw.ac.map(normalizeAircraft);
-    if (raw.data) return raw.data.map(normalizeAircraft);
-    if (Array.isArray(raw)) return raw.map(normalizeAircraft);
-  }
+function normalizeResponse(raw) {
+  if (raw.ac) return raw.ac.map(normalizeAircraft);
+  if (raw.data) return raw.data.map(normalizeAircraft);
+  if (Array.isArray(raw)) return raw.map(normalizeAircraft);
   return [];
 }
 
@@ -95,15 +83,26 @@ function normalizeAircraft(a) {
   };
 }
 
-async function queryADSB(endpoint) {
+function buildEndpoint(template, params) {
+  return template.replace('{lat}', params.lat).replace('{lon}', params.lon).replace('{dist}', params.dist);
+}
+
+async function queryADSB(endpointOrParams, sourceOverride) {
   const errors = [];
   const sorted = [...ADSB_SOURCES].sort((a, b) => a.priority - b.priority);
 
   for (const source of sorted) {
+    if (sourceOverride && source.name !== sourceOverride) continue;
     try {
-      const fullUrl = `${source.url}${endpoint}`;
+      let fullUrl;
+      if (typeof endpointOrParams === 'string') {
+        fullUrl = `${source.url}${endpointOrParams}`;
+      } else {
+        const ep = source.endpoint || '/lat/{lat}/lon/{lon}/dist/{dist}';
+        fullUrl = `${source.url}${buildEndpoint(ep, endpointOrParams)}`;
+      }
       const data = await fetchUrl(fullUrl);
-      const normalized = normalizeResponse(data, source);
+      const normalized = normalizeResponse(data);
       if (source.name !== activeSource.name) {
         activeSource = source;
         console.log(`[failover] Switched to ${source.name}`);
@@ -134,13 +133,9 @@ app.get('/api/flights', async (req, res) => {
 
     let result;
     try {
-      result = await queryADSB(`/lat/${lat}/lon/${lon}/dist/${r}`);
+      result = await queryADSB({ lat, lon, dist: r });
     } catch {
-      try {
-        result = await queryADSB(`/point/${lat}/${lon}/${r}`);
-      } catch {
-        result = await queryADSB(`/all`);
-      }
+      result = await queryADSB('/all');
     }
 
     const filtered = result.data.filter(a => {
