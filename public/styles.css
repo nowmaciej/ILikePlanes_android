@@ -166,6 +166,8 @@ body {
 .alt-level { color:var(--fg3); }
 
 .callsign-cell { font-family:var(--font-mono); font-weight:600; color:var(--accent2); }
+.callsign-link { cursor:pointer; text-decoration:underline; text-decoration-color:transparent; transition:text-decoration-color .2s; }
+.callsign-link:hover { text-decoration-color:var(--accent); }
 .route-cell { font-family:var(--font-mono); font-size:12px; color:var(--fg2); white-space:nowrap; }
 .distance-cell { color:var(--fg2); }
 .speed-cell { font-family:var(--font-mono); }
@@ -261,6 +263,9 @@ body {
 }
 #radar-flight-count { color:var(--accent2); font-weight:600; }
 #radar-source { color:var(--fg3); }
+.radar-plane { transition:filter .3s; }
+.radar-plane-selected { animation:radar-pulse 1.5s ease-in-out infinite; }
+@keyframes radar-pulse { 0%,100%{filter:drop-shadow(0 0 6px var(--danger));} 50%{filter:drop-shadow(0 0 14px var(--danger));} }
 
 /* ===== STATS VIEW ===== */
 #stats-panel { padding:16px; overflow:auto; }

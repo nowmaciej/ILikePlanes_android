@@ -655,7 +655,14 @@ function renderFlightList() {
 
     row.innerHTML = '';
     row.appendChild(logoTd);
-    row.appendChild(h('td', { class:'callsign-cell', text: getFlightCallsign(f) }));
+
+    const callsignTd = h('td', { class:'callsign-cell callsign-link', text: getFlightCallsign(f) });
+    callsignTd.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectFlight(f);
+      switchView('radar');
+    });
+    row.appendChild(callsignTd);
 
     const routeDisplay = getRouteDisplay(f);
     const routeTd = h('td', { class:'route-cell' });
@@ -1028,14 +1035,23 @@ function updateRadarMap() {
 
     if (state.radarMarkers[f.hex]) {
       state.radarMarkers[f.hex].setLatLng([f.lat, f.lon]);
-      const icon = state.radarMarkers[f.hex].getElement();
-      if (icon) icon.style.transform = `rotate(${f.track || 0}deg)`;
+      const isSelected = state.selectedFlight?.hex === f.hex;
+      const iconEl = state.radarMarkers[f.hex].getElement();
+      if (iconEl) {
+        const inner = iconEl.querySelector('.radar-plane-icon');
+        if (inner) {
+          inner.style.transform = `rotate(${f.track || 0}deg) scale(${isSelected ? 1.6 : 1})`;
+          inner.style.color = isSelected ? 'var(--danger)' : 'var(--accent)';
+          inner.style.filter = isSelected ? 'drop-shadow(0 0 6px var(--danger))' : 'none';
+        }
+      }
     } else {
+      const isSelected = state.selectedFlight?.hex === f.hex;
       const marker = L.marker([f.lat, f.lon], {
         icon: L.divIcon({
-          className:'radar-plane',
-          html:`<div class="radar-plane-icon" style="color:var(--accent);font-size:14px;transform:rotate(${f.track||0}deg);transition:transform .5s">&#9992;</div>`,
-          iconSize:[16,16]
+          className: `radar-plane${isSelected ? ' radar-plane-selected' : ''}`,
+          html:`<div class="radar-plane-icon" style="color:${isSelected ? 'var(--danger)' : 'var(--accent)'};font-size:${isSelected ? '18px' : '14px'};transform:rotate(${f.track||0}deg);transition:transform .5s, color .3s;${isSelected ? 'filter:drop-shadow(0 0 6px var(--danger));' : ''}">&#9992;</div>`,
+          iconSize:[isSelected?20:16,isSelected?20:16]
         })
       }).addTo(state.map);
       marker.on('click', () => selectFlight(f));
