@@ -20,16 +20,21 @@ let activeSource = ADSB_SOURCES[0];
 let lastFailover = 0;
 const FAILOVER_COOLDOWN = 60000;
 
-function fetchUrl(targetUrl, timeout = 8000) {
+function fetchUrl(targetUrl, timeout = 8000, maxRedirects = 3) {
   return new Promise((resolve, reject) => {
     const parsed = new URL(targetUrl);
     const client = parsed.protocol === 'https:' ? https : http;
     const req = client.get(targetUrl, { timeout }, (res) => {
+      if ((res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 307 || res.statusCode === 308) && res.headers.location) {
+        if (maxRedirects <= 0) return reject(new Error('Too many redirects'));
+        res.resume();
+        return fetchUrl(res.headers.location, timeout, maxRedirects - 1).then(resolve, reject);
+      }
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
-          resolve(JSON.parse(data));
+          try { resolve(JSON.parse(data)); } catch(e) { reject(new Error('Invalid JSON')); }
         } else {
           reject(new Error(`HTTP ${res.statusCode}`));
         }
@@ -169,6 +174,23 @@ app.get('/api/routes/:hex', async (req, res) => {
     } catch (err2) {
       res.status(500).json({ error: err2.message });
     }
+  }
+});
+
+app.get('/api/metar', async (req, res) => {
+  try {
+    const { lat, lon } = req.query;
+    if (!lat || !lon) return res.status(400).json({ error: 'lat and lon required' });
+    const latN = parseFloat(lat) + 0.8;
+    const latS = parseFloat(lat) - 0.8;
+    const lonE = parseFloat(lon) + 1.2;
+    const lonW = parseFloat(lon) - 1.2;
+    const metarUrl = `https://aviationweather.gov/api/data/metar?bbox=${latS},${lonW},${latN},${lonE}&format=json`;
+    const data = await fetchUrl(metarUrl, 10000);
+    const list = Array.isArray(data) ? data : (data.data || data.metar || []);
+    res.json(list);
+  } catch (err) {
+    res.status(502).json({ error: err.message });
   }
 });
 

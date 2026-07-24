@@ -941,6 +941,12 @@ function initRadarMap() {
       weight: 1, dashArray: '6,4'
     }).addTo(state.map);
   }
+
+  state.map.on('click', () => {
+    state.selectedFlight = null;
+    hideRadarSidebar();
+    renderFlightList();
+  });
 }
 
 function updateRadarMap() {
@@ -1105,13 +1111,17 @@ function updateSessionInfo() {
 async function fetchMETAR() {
   if (!state.position) return;
   try {
-    const data = await fetchJSON(`https://aviationweather.gov/api/data/metar?lat=${state.position.lat}&lon=${state.position.lon}&distance=100&format=json`);
-    if (data && data.length > 0) {
-      state.metarData = data[0];
-      const metar = data[0];
-      document.getElementById('metar-display').textContent = metar.rawOb || metar.raw_text || '---';
+    const data = await fetchJSON(`/api/metar?lat=${state.position.lat}&lon=${state.position.lon}`);
+    const list = Array.isArray(data) ? data : (data.data || data.metar || []);
+    if (list.length > 0) {
+      const metar = list[0];
+      state.metarData = metar;
+      document.getElementById('metar-display').textContent = metar.rawOb || metar.raw_text || metar.raw_METAR || JSON.stringify(metar).substring(0, 200);
+    } else {
+      document.getElementById('metar-display').textContent = t('weather.notAvailable');
     }
-  } catch {
+  } catch(e) {
+    console.warn('METAR fetch error:', e.message);
     document.getElementById('metar-display').textContent = t('weather.notAvailable');
   }
 }
@@ -1347,7 +1357,21 @@ function initGeolocation() {
   }
 }
 
+async function loadTranslations() {
+  try {
+    const [en, pl] = await Promise.all([
+      fetchJSON('lang/en.json'),
+      fetchJSON('lang/pl.json')
+    ]);
+    state.translations.en = en;
+    state.translations.pl = pl;
+  } catch(e) {
+    console.warn('Failed to load translations:', e.message);
+  }
+}
+
 async function init() {
+  await loadTranslations();
   initSettings();
   initNavigation();
   updateClock();

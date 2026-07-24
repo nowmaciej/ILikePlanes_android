@@ -294,7 +294,7 @@ body {
   color:var(--fg3); cursor:pointer; transition:color .15s;
   font-size:10px; font-weight:600;
 }
-.nav-btn svg { width:22px; height:22px; fill:currentColor; }
+.nav-btn svg { width:22px; height:22px; }
 .nav-btn.active, .nav-btn:hover { color:var(--accent); }
 
 /* ===== SCREENSAVER ===== */
@@ -424,7 +424,7 @@ body {
   display:flex; flex-direction:column; overflow:hidden;
   transform:translateX(0); transition:transform .3s ease;
 }
-.radar-sidebar.hidden { transform:translateX(100%); display:flex !important; }
+.radar-sidebar.hidden { display:none; }
 .radar-sidebar-close {
   position:absolute; top:8px; right:8px; z-index:10;
   background:var(--bg3); border:1px solid var(--border2); color:var(--fg2);
