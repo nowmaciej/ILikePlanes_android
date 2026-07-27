@@ -211,15 +211,11 @@ body {
 #detail-callsign { font-family:var(--font-mono); font-size:20px; color:var(--accent2); }
 
 #details-body { padding:16px; }
-#detail-photo-wrap {
-  position:relative; width:100%; max-height:200px; overflow:hidden;
-  border-radius:var(--radius); margin-bottom:16px; background:var(--bg3);
-}
-#detail-photo { width:100%; height:200px; object-fit:cover; }
 #detail-airline-logo-wrap {
-  position:absolute; bottom:8px; left:8px; width:48px; height:48px;
+  width:48px; height:48px;
   border-radius:50%; background:var(--bg2); border:2px solid var(--border2);
   display:flex; align-items:center; justify-content:center; overflow:hidden;
+  margin-bottom:12px;
 }
 #detail-airline-logo-wrap img { width:100%; height:100%; object-fit:contain; }
 
@@ -445,11 +441,6 @@ body {
 #radar-sidebar-content {
   flex:1; overflow-y:auto; padding:12px 16px 16px;
 }
-#rsb-photo-wrap {
-  width:100%; height:120px; border-radius:var(--radius-sm); overflow:hidden;
-  margin-bottom:10px; background:var(--bg3);
-}
-#rsb-photo { width:100%; height:100%; object-fit:cover; }
 #rsb-callsign { font-size:18px; font-weight:700; color:var(--accent); margin-bottom:2px; }
 .rsb-sub { font-size:12px; color:var(--fg3); margin-bottom:8px; }
 .rsb-route {

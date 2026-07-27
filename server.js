@@ -250,8 +250,8 @@ app.get('/api/routes-batch', async (req, res) => {
           lookupAirport(routeInfo.destination)
         ]);
         results[cs] = {
-          origin: originInfo ? { icao: originInfo.icao, iata: originInfo.iata, name: originInfo.name } : (routeInfo.origin ? { icao: routeInfo.origin } : null),
-          destination: destInfo ? { icao: destInfo.icao, iata: destInfo.iata, name: destInfo.name } : (routeInfo.destination ? { icao: routeInfo.destination } : null),
+          origin: originInfo ? { icao: originInfo.icao, iata: originInfo.iata, name: originInfo.name, lat: originInfo.lat, lon: originInfo.lon } : (routeInfo.origin ? { icao: routeInfo.origin } : null),
+          destination: destInfo ? { icao: destInfo.icao, iata: destInfo.iata, name: destInfo.name, lat: destInfo.lat, lon: destInfo.lon } : (routeInfo.destination ? { icao: routeInfo.destination } : null),
           route: routeInfo.route
         };
       }

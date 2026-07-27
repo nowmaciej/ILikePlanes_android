@@ -167,16 +167,6 @@ function getAirlineName(ownOp, flight) {
   return airlines[icao] || icao || '---';
 }
 
-function aircraftTypeImage(type) {
-  if (!type) return '';
-  return `https://cdn.planespotters.net/media/type-icons/${type.toLowerCase()}.png`;
-}
-
-function planespottersPhoto(reg) {
-  if (!reg) return '';
-  return `https://cdn.planespotters.net/aircraft/Photos/${reg.toLowerCase()}.jpg`;
-}
-
 function metarUrl(icao) {
   return `https://aviationweather.gov/api/data/metar?id=${icao}&format=json`;
 }
@@ -600,12 +590,18 @@ function getFlightCallsign(f) {
 
 async function fetchRoute(callsign) {
   const key = (callsign || '').trim().toUpperCase();
-  if (!key || state.routeCache[key] !== undefined) return state.routeCache[key];
+  if (!key) return null;
+  if (state.routeCache[key] !== undefined) {
+    console.log('[ROUTE] cache hit', key, state.routeCache[key]);
+    return state.routeCache[key];
+  }
   try {
     const data = await fetchJSON(`/api/route/${key}`);
+    console.log('[ROUTE] fetched', key, data);
     state.routeCache[key] = data;
     return data;
-  } catch {
+  } catch (e) {
+    console.log('[ROUTE] fetch error', key, e);
     state.routeCache[key] = null;
     return null;
   }
@@ -776,7 +772,9 @@ function selectFlight(f) {
   centerMapOnFlight(f);
 
   if (f.flight) {
+    console.log('[SELECT] fetching route for', f.flight);
     fetchRoute(f.flight).then(route => {
+      console.log('[SELECT] route resolved', route);
       if (state.selectedFlight?.hex === f.hex) {
         if (state.currentView === 'radar') {
           updateRadarSidebar();
@@ -827,10 +825,12 @@ function drawRadarRoute(f) {
 
   const key = (f.flight || '').trim().toUpperCase();
   const route = state.routeCache[key];
+  console.log('[DRAW ROUTE]', key, route);
   if (!route) return;
 
   const origin = route.origin;
   const dest = route.destination;
+  console.log('[DRAW ROUTE] origin:', origin, 'dest:', dest);
   if (!origin && !dest) return;
 
   const layer = L.layerGroup().addTo(state.map);
@@ -862,6 +862,8 @@ function drawRadarRoute(f) {
       weight: 2, dashArray: '8,6', opacity: 0.6
     }).addTo(layer);
   }
+
+  console.log('[DRAW ROUTE] coords:', coords);
 
   if (coords.length > 1) {
     state.map.fitBounds(L.latLngBounds(coords).pad(0.15), { animate: true, maxZoom: 10 });
@@ -920,14 +922,6 @@ function showRadarSidebar(f) {
 
   document.getElementById('rsb-callsign').textContent = callsign;
   document.getElementById('rsb-airline').textContent = `${airline.name} ${f.t ? '(' + f.t + ')' : ''}`;
-
-  const photo = document.getElementById('rsb-photo');
-  if (f.r) {
-    photo.src = planespottersPhoto(f.r);
-    photo.onerror = function() { this.src = 'https://placehold.co/340x120/1a2332/64748b?text=Aircraft'; };
-  } else {
-    photo.src = 'https://placehold.co/340x120/1a2332/64748b?text=Aircraft';
-  }
 
   const routeEl = document.getElementById('rsb-route');
   const routeDisplay = getRouteDisplay(f);
@@ -1072,14 +1066,6 @@ function updateDetailPanel(f) {
   document.getElementById('detail-category').textContent = f._categoryLabel || f.category || '---';
   document.getElementById('detail-icao').textContent = f.hex || '---';
   document.getElementById('detail-eta').textContent = '---';
-
-  const photo = document.getElementById('detail-photo');
-  if (f.r) {
-    photo.src = planespottersPhoto(f.r);
-    photo.onerror = function() { this.src = 'https://placehold.co/600x200/1a2332/64748b?text=Aircraft+Photo'; };
-  } else {
-    photo.src = 'https://placehold.co/600x200/1a2332/64748b?text=Aircraft+Photo';
-  }
 
   const logoWrap = document.getElementById('detail-airline-logo');
   logoWrap.src = getAirlineLogo(f.flight, f.r);
