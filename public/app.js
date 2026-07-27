@@ -437,7 +437,7 @@ function applyManualPosition(lat, lon, name) {
   state.position = { lat, lon };
   updateLocationDisplay();
   if (state.map) {
-    state.map.setView([lat, lon], 8);
+    state.map.panTo([lat, lon]);
     if (state.myLocationMarker) state.myLocationMarker.setLatLng([lat, lon]);
     if (state.radarCircle) {
       state.radarCircle.setLatLng([lat, lon]);
@@ -808,32 +808,28 @@ function highlightRadarMarker(prevHex, newHex) {
 
 function centerMapOnFlight(f) {
   if (!state.map || !f.lat || !f.lon) return;
-  const mapEl = state.map.getContainer();
-  const mapRect = mapEl.getBoundingClientRect();
-  const sidebar = document.getElementById('radar-sidebar');
-  let visW = mapRect.width;
-  let visH = mapRect.height;
-  let visLeft = 0;
-  let visTop = 0;
-  if (sidebar && !sidebar.classList.contains('hidden')) {
-    const sbRect = sidebar.getBoundingClientRect();
-    if (sbRect.right >= mapRect.right - 1 && sbRect.left < mapRect.right) {
-      visW -= sbRect.width;
+  requestAnimationFrame(() => {
+    const sidebar = document.getElementById('radar-sidebar');
+    const mapEl = state.map.getContainer();
+    const mapRect = mapEl.getBoundingClientRect();
+    let offsetX = 0;
+    let offsetY = 0;
+    if (sidebar && !sidebar.classList.contains('hidden')) {
+      const sbRect = sidebar.getBoundingClientRect();
+      const sbCenterX = (sbRect.left + sbRect.right) / 2;
+      const mapCenterX = (mapRect.left + mapRect.right) / 2;
+      const sbCenterY = (sbRect.top + sbRect.bottom) / 2;
+      const mapCenterY = (mapRect.top + mapRect.bottom) / 2;
+      if (sbCenterX > mapCenterX) offsetX = sbRect.width / 2;
+      else if (sbCenterX < mapCenterX) offsetX = -sbRect.width / 2;
+      if (sbCenterY > mapCenterY) offsetY = sbRect.height / 2;
+      else if (sbCenterY < mapCenterY) offsetY = -sbRect.height / 2;
     }
-    if (sbRect.bottom >= mapRect.bottom - 1 && sbRect.top < mapRect.bottom) {
-      visH -= sbRect.height;
-    }
-    if (sbRect.left <= mapRect.left + 1 && sbRect.right > mapRect.left) {
-      visLeft = sbRect.width;
-    }
-    if (sbRect.top <= mapRect.top + 1 && sbRect.bottom > mapRect.top) {
-      visTop = sbRect.height;
-    }
-  }
-  const planePx = state.map.latLngToContainerPoint([f.lat, f.lon]);
-  const visualCx = visLeft + visW / 2;
-  const visualCy = visTop + visH / 2;
-  state.map.panBy([planePx.x - visualCx, planePx.y - visualCy], { animate: true });
+    const size = state.map.getSize();
+    const targetPx = [size.x / 2 - offsetX, size.y / 2 - offsetY];
+    const planePx = state.map.latLngToContainerPoint([f.lat, f.lon]);
+    state.map.panBy([planePx.x - targetPx[0], planePx.y - targetPx[1]], { animate: true });
+  });
 }
 
 function clearRadarRoute() {
@@ -888,10 +884,6 @@ function drawRadarRoute(f) {
   }
 
   console.log('[DRAW ROUTE] coords:', coords);
-
-  if (coords.length > 1) {
-    state.map.fitBounds(L.latLngBounds(coords).pad(0.15), { animate: true, maxZoom: 10 });
-  }
 }
 
 function updateRadarRoute() {
@@ -1394,7 +1386,7 @@ function switchView(view) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
   state.currentView = view;
 
-  if (view === 'radar') { updateRadarMap(); setTimeout(() => state.map?.invalidateSize(), 100); }
+  if (view === 'radar') { updateRadarMap(); setTimeout(() => { state.map?.invalidateSize(); if (state.selectedFlight) centerMapOnFlight(state.selectedFlight); }, 100); }
   if (view === 'stats') { drawHourlyChart(); fetchMETAR(); }
   if (view === 'list') renderFlightList();
 }
@@ -1622,7 +1614,7 @@ function initGeolocation() {
         state.position = { lat: pos.coords.latitude, lon: pos.coords.longitude };
         console.log(`Location: ${state.position.lat}, ${state.position.lon}`);
         if (state.map) {
-          state.map.setView([state.position.lat, state.position.lon], 8);
+          state.map.panTo([state.position.lat, state.position.lon]);
           if (state.myLocationMarker) state.myLocationMarker.setLatLng([state.position.lat, state.position.lon]);
         }
         fetchFlights();

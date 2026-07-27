@@ -59,7 +59,7 @@
   },
   "spotter": {
     "bearing": "Azymut",
-    "elevation": "Kąt wzniesienia",
+    "elevation": "Kierunek widoczności",
     "distance": "Odległość",
     "flyover": "Przechodzi nad tobą",
     "minutes": "min",
