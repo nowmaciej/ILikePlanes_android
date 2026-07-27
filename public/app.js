@@ -807,9 +807,14 @@ function highlightRadarMarker(prevHex, newHex) {
 }
 
 function centerMapOnFlight(f) {
-  if (state.map && f.lat && f.lon) {
-    state.map.panTo([f.lat, f.lon], { animate: true });
-  }
+  if (!state.map || !f.lat || !f.lon) return;
+  const sidebar = document.getElementById('radar-sidebar');
+  const sidebarW = sidebar && !sidebar.classList.contains('hidden') ? sidebar.offsetWidth : 0;
+  const size = state.map.getSize();
+  const planePx = state.map.latLngToContainerPoint([f.lat, f.lon]);
+  const visualCx = (size.x - sidebarW) / 2;
+  const visualCy = size.y / 2;
+  state.map.panBy([planePx.x - visualCx, planePx.y - visualCy], { animate: true });
 }
 
 function clearRadarRoute() {
