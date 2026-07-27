@@ -74,7 +74,7 @@ function createPlaneIcon(f, selected) {
   const size = selected ? 22 : 16;
   return L.divIcon({
     className: `radar-plane${selected ? ' radar-plane-selected' : ''}`,
-    html: `<svg class="radar-plane-icon" width="${size}" height="${size}" viewBox="0 0 24 24" style="color:${color};transform:rotate(${f.track||0}deg);transition:transform .5s, color .3s;${selected ? 'filter:drop-shadow(0 0 6px var(--danger));' : ''}"><use href="icons.svg#${iconId}"/></svg>`,
+    html: `<svg class="radar-plane-icon map-icon" width="${size}" height="${size}" viewBox="0 0 24 24" style="color:${color};transform:rotate(${f.track||0}deg);transition:transform .5s, color .3s;${selected ? 'filter:drop-shadow(0 0 6px var(--danger));' : ''}"><use href="icons.svg#${iconId}"/></svg>`,
     iconSize: [size, size],
     iconAnchor: [size/2, size/2]
   });
@@ -1154,7 +1154,7 @@ function initDetailRouteMap(f) {
       const iconId = getCategoryIcon(f.category);
       const planeIcon = L.divIcon({
         className:'plane-marker',
-        html:`<svg width="20" height="20" viewBox="0 0 24 24" style="color:var(--accent);transform:rotate(${f.track || 0}deg)"><use href="icons.svg#${iconId}"/></svg>`
+        html:`<svg class="map-icon" width="20" height="20" viewBox="0 0 24 24" style="color:var(--accent);transform:rotate(${f.track || 0}deg)"><use href="icons.svg#${iconId}"/></svg>`
       });
       L.marker([f.lat, f.lon], { icon:planeIcon }).addTo(state.detailMap);
     }
