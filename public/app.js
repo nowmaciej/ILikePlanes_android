@@ -808,12 +808,31 @@ function highlightRadarMarker(prevHex, newHex) {
 
 function centerMapOnFlight(f) {
   if (!state.map || !f.lat || !f.lon) return;
+  const mapEl = state.map.getContainer();
+  const mapRect = mapEl.getBoundingClientRect();
   const sidebar = document.getElementById('radar-sidebar');
-  const sidebarW = sidebar && !sidebar.classList.contains('hidden') ? sidebar.offsetWidth : 0;
-  const size = state.map.getSize();
+  let visW = mapRect.width;
+  let visH = mapRect.height;
+  let visLeft = 0;
+  let visTop = 0;
+  if (sidebar && !sidebar.classList.contains('hidden')) {
+    const sbRect = sidebar.getBoundingClientRect();
+    if (sbRect.right >= mapRect.right - 1 && sbRect.left < mapRect.right) {
+      visW -= sbRect.width;
+    }
+    if (sbRect.bottom >= mapRect.bottom - 1 && sbRect.top < mapRect.bottom) {
+      visH -= sbRect.height;
+    }
+    if (sbRect.left <= mapRect.left + 1 && sbRect.right > mapRect.left) {
+      visLeft = sbRect.width;
+    }
+    if (sbRect.top <= mapRect.top + 1 && sbRect.bottom > mapRect.top) {
+      visTop = sbRect.height;
+    }
+  }
   const planePx = state.map.latLngToContainerPoint([f.lat, f.lon]);
-  const visualCx = (size.x - sidebarW) / 2;
-  const visualCy = size.y / 2;
+  const visualCx = visLeft + visW / 2;
+  const visualCy = visTop + visH / 2;
   state.map.panBy([planePx.x - visualCx, planePx.y - visualCy], { animate: true });
 }
 
