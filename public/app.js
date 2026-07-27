@@ -69,10 +69,14 @@ let t = (key) => {
 };
 
 function createPlaneIcon(f, selected) {
+  const iconId = getCategoryIcon(f.category);
+  const color = selected ? 'var(--danger)' : 'var(--accent)';
+  const size = selected ? 22 : 16;
   return L.divIcon({
     className: `radar-plane${selected ? ' radar-plane-selected' : ''}`,
-    html: `<div class="radar-plane-icon" style="color:${selected ? 'var(--danger)' : 'var(--accent)'};font-size:${selected ? '18px' : '14px'};transform:rotate(${f.track||0}deg);transition:transform .5s, color .3s;${selected ? 'filter:drop-shadow(0 0 6px var(--danger));' : ''}">&#9992;</div>`,
-    iconSize: [selected?20:16, selected?20:16]
+    html: `<svg class="radar-plane-icon" width="${size}" height="${size}" viewBox="0 0 24 24" style="color:${color};transform:rotate(${f.track||0}deg);transition:transform .5s, color .3s;${selected ? 'filter:drop-shadow(0 0 6px var(--danger));' : ''}"><use href="icons.svg#${iconId}"/></svg>`,
+    iconSize: [size, size],
+    iconAnchor: [size/2, size/2]
   });
 }
 
@@ -573,6 +577,12 @@ function decodeCategory(cat) {
   };
   const key = typeof cat === 'number' ? `A${cat}` : cat;
   return categories[key] || cat;
+}
+
+function getCategoryIcon(cat) {
+  if (!cat) return 'cat-no-info';
+  const key = typeof cat === 'number' ? `A${cat}` : cat;
+  return `cat-${key.toLowerCase()}`;
 }
 
 function updateSourceBadge() {
@@ -1141,9 +1151,10 @@ function initDetailRouteMap(f) {
     L.polyline(coords, { color: THEME_COLORS[state.theme] || '#3b82f6', weight:2, dashArray:'8,6', opacity:0.8 }).addTo(state.detailMap);
 
     if (f.lat && f.lon) {
+      const iconId = getCategoryIcon(f.category);
       const planeIcon = L.divIcon({
         className:'plane-marker',
-        html:`<div style="color:var(--accent);font-size:20px;transform:rotate(${f.track || 0}deg)">&#9992;</div>`
+        html:`<svg width="20" height="20" viewBox="0 0 24 24" style="color:var(--accent);transform:rotate(${f.track || 0}deg)"><use href="icons.svg#${iconId}"/></svg>`
       });
       L.marker([f.lat, f.lon], { icon:planeIcon }).addTo(state.detailMap);
     }
