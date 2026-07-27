@@ -51,6 +51,8 @@ const state = {
   radarTrails: {},
   radarCircle: null,
   myLocationMarker: null,
+  layerAirports: null,
+  layerPlanes: null,
   radarRouteLayer: null,
   metarData: null,
   translations: { en: {}, pl: {} },
@@ -65,6 +67,14 @@ let t = (key) => {
   for (const p of parts) { v = v?.[p]; }
   return v || key;
 };
+
+function createPlaneIcon(f, selected) {
+  return L.divIcon({
+    className: `radar-plane${selected ? ' radar-plane-selected' : ''}`,
+    html: `<div class="radar-plane-icon" style="color:${selected ? 'var(--danger)' : 'var(--accent)'};font-size:${selected ? '18px' : '14px'};transform:rotate(${f.track||0}deg);transition:transform .5s, color .3s;${selected ? 'filter:drop-shadow(0 0 6px var(--danger));' : ''}">&#9992;</div>`,
+    iconSize: [selected?20:16, selected?20:16]
+  });
+}
 
 function h(tag, attrs, ...children) {
   const el = document.createElement(tag);
@@ -541,6 +551,7 @@ function processFlights() {
   const displayed = state.flights.slice(0, MAX_DISPLAYED);
   const callsigns = displayed.map(f => f.flight).filter(Boolean);
   fetchRoutesBatch(callsigns).then(() => {
+    updateAirportMarkers();
     if (state.currentView === 'list') renderFlightList();
     if (state.selectedFlight && state.currentView === 'radar') {
       updateRadarSidebar();
@@ -623,6 +634,36 @@ function getRouteDisplay(f) {
   const to = r.destination?.iata || r.destination?.icao || null;
   if (!from && !to) return null;
   return { from, to, origin: r.origin, destination: r.destination };
+}
+
+function updateAirportMarkers() {
+  if (!state.layerAirports) return;
+  state.layerAirports.clearLayers();
+  if (!state.map) return;
+
+  const seen = new Set();
+  const displayed = state.flights.slice(0, MAX_DISPLAYED);
+
+  displayed.forEach(f => {
+    const key = (f.flight || '').trim().toUpperCase();
+    const route = state.routeCache[key];
+    if (!route) return;
+
+    const airports = [route.origin, route.destination].filter(a => a?.lat != null && a?.lon != null);
+    airports.forEach(a => {
+      const id = a.icao || a.iata;
+      if (!id || seen.has(id)) return;
+      seen.add(id);
+      const label = a.iata ? `${a.iata}: ${a.name}` : (a.name || a.icao || '');
+      L.marker([a.lat, a.lon], {
+        icon: L.divIcon({
+          className: 'radar-airport-marker',
+          html: `<div style="width:7px;height:7px;background:#facc15;border:2px solid #fff;border-radius:50%;box-shadow:0 0 4px rgba(0,0,0,.4)"></div>`,
+          iconSize: [7, 7], iconAnchor: [3.5, 3.5]
+        })
+      }).addTo(state.layerAirports).bindPopup(label);
+    });
+  });
 }
 
 function getSortValue(f, key) {
@@ -749,26 +790,22 @@ function selectFlight(f) {
 
 function highlightRadarMarker(prevHex, newHex) {
   if (!state.map) return;
-  function styleMarker(hex, selected) {
-    const marker = state.radarMarkers[hex];
-    if (!marker) return;
-    const iconEl = marker.getElement();
-    if (!iconEl) return;
-    const inner = iconEl.querySelector('.radar-plane-icon');
-    if (!inner) return;
-    const f = state.flights.find(fl => fl.hex === hex);
-    if (!f) return;
-    inner.style.transform = `rotate(${f.track || 0}deg) scale(${selected ? 1.6 : 1})`;
-    inner.style.color = selected ? 'var(--danger)' : 'var(--accent)';
-    inner.style.filter = selected ? 'drop-shadow(0 0 6px var(--danger))' : 'none';
-    if (selected) {
-      marker.getElement()?.classList.add('radar-plane-selected');
-    } else {
-      marker.getElement()?.classList.remove('radar-plane-selected');
+  if (prevHex && prevHex !== newHex) {
+    const prevF = state.flights.find(fl => fl.hex === prevHex);
+    const prevMarker = state.radarMarkers[prevHex];
+    if (prevMarker && prevF) {
+      prevMarker.setIcon(createPlaneIcon(prevF, false));
+      prevMarker.setZIndexOffset(0);
     }
   }
-  if (prevHex && prevHex !== newHex) styleMarker(prevHex, false);
-  if (newHex) styleMarker(newHex, true);
+  if (newHex) {
+    const newF = state.flights.find(fl => fl.hex === newHex);
+    const newMarker = state.radarMarkers[newHex];
+    if (newMarker && newF) {
+      newMarker.setIcon(createPlaneIcon(newF, true));
+      newMarker.setZIndexOffset(1000000);
+    }
+  }
 }
 
 function centerMapOnFlight(f) {
@@ -1125,7 +1162,7 @@ function initRadarMap() {
     zoom: 8
   });
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom:18 }).addTo(state.map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'&copy; OpenStreetMap' }).addTo(state.map);
 
   L.control.zoom({ position: 'topright' }).addTo(state.map);
 
@@ -1136,7 +1173,11 @@ function initRadarMap() {
         html:'<div style="width:12px;height:12px;background:var(--accent);border:2px solid white;border-radius:50%;box-shadow:0 0 10px var(--accent)"></div>'
       })
     }).addTo(state.map).bindPopup(t('radar.yourLocation'));
+  }
 
+  state.layerAirports = L.layerGroup().addTo(state.map);
+
+  if (state.position) {
     state.radarCircle = L.circle([state.position.lat, state.position.lon], {
       radius: state.radius * NM_TO_KM * 1000,
       color: THEME_COLORS[state.theme] || '#3b82f6',
@@ -1145,6 +1186,8 @@ function initRadarMap() {
       weight: 1, dashArray: '6,4'
     }).addTo(state.map);
   }
+
+  state.layerPlanes = L.layerGroup().addTo(state.map);
 
   state.map.on('click', () => {
     const prevHex = state.selectedFlight?.hex;
@@ -1170,24 +1213,14 @@ function updateRadarMap() {
     if (state.radarMarkers[f.hex]) {
       state.radarMarkers[f.hex].setLatLng([f.lat, f.lon]);
       const isSelected = state.selectedFlight?.hex === f.hex;
-      const iconEl = state.radarMarkers[f.hex].getElement();
-      if (iconEl) {
-        const inner = iconEl.querySelector('.radar-plane-icon');
-        if (inner) {
-          inner.style.transform = `rotate(${f.track || 0}deg) scale(${isSelected ? 1.6 : 1})`;
-          inner.style.color = isSelected ? 'var(--danger)' : 'var(--accent)';
-          inner.style.filter = isSelected ? 'drop-shadow(0 0 6px var(--danger))' : 'none';
-        }
-      }
+      state.radarMarkers[f.hex].setIcon(createPlaneIcon(f, isSelected));
+      state.radarMarkers[f.hex].setZIndexOffset(isSelected ? 1000000 : 0);
     } else {
       const isSelected = state.selectedFlight?.hex === f.hex;
       const marker = L.marker([f.lat, f.lon], {
-        icon: L.divIcon({
-          className: `radar-plane${isSelected ? ' radar-plane-selected' : ''}`,
-          html:`<div class="radar-plane-icon" style="color:${isSelected ? 'var(--danger)' : 'var(--accent)'};font-size:${isSelected ? '18px' : '14px'};transform:rotate(${f.track||0}deg);transition:transform .5s, color .3s;${isSelected ? 'filter:drop-shadow(0 0 6px var(--danger));' : ''}">&#9992;</div>`,
-          iconSize:[isSelected?20:16,isSelected?20:16]
-        })
-      }).addTo(state.map);
+        icon: createPlaneIcon(f, isSelected),
+        zIndexOffset: isSelected ? 1000000 : 0
+      }).addTo(state.layerPlanes);
       marker.on('click', () => selectFlight(f));
       state.radarMarkers[f.hex] = marker;
     }
