@@ -51,9 +51,12 @@ const state = {
   radarTrails: {},
   radarCircle: null,
   myLocationMarker: null,
+  radarRouteLayer: null,
   metarData: null,
   translations: { en: {}, pl: {} },
-  routeCache: {}
+  routeCache: {},
+  sortKey: 'distance',
+  sortAsc: true
 };
 
 let t = (key) => {
@@ -539,7 +542,10 @@ function processFlights() {
   const callsigns = displayed.map(f => f.flight).filter(Boolean);
   fetchRoutesBatch(callsigns).then(() => {
     if (state.currentView === 'list') renderFlightList();
-    if (state.selectedFlight && state.currentView === 'radar') updateRadarSidebar();
+    if (state.selectedFlight && state.currentView === 'radar') {
+      updateRadarSidebar();
+      drawRadarRoute(state.selectedFlight);
+    }
   });
 }
 
@@ -619,6 +625,35 @@ function getRouteDisplay(f) {
   return { from, to, origin: r.origin, destination: r.destination };
 }
 
+function getSortValue(f, key) {
+  switch (key) {
+    case 'callsign': return (f.flight || f.hex || '').trim().toUpperCase();
+    case 'route': {
+      const rd = getRouteDisplay(f);
+      return (rd?.to || '').toUpperCase();
+    }
+    case 'airline': return (getAirlineInfo(f).name || '').toLowerCase();
+    case 'type': return (f.t || '').toLowerCase();
+    case 'altitude': return f.alt_baro == null || f.alt_baro === 'ground' ? -1 : f.alt_baro;
+    case 'speed': return f.gs ?? -1;
+    case 'distance': return f._distance ?? 99999;
+    case 'heading': return f.track ?? -1;
+    default: return 0;
+  }
+}
+
+function sortFlights(flights) {
+  const key = state.sortKey;
+  if (!key) return flights;
+  const asc = state.sortAsc;
+  return [...flights].sort((a, b) => {
+    const va = getSortValue(a, key);
+    const vb = getSortValue(b, key);
+    if (typeof va === 'string') return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+    return asc ? va - vb : vb - va;
+  });
+}
+
 function getAirlineInfo(f) {
   const name = getAirlineName(f.ownOp, f.flight);
   const icao = (f.flight || '').substring(0, 3);
@@ -627,7 +662,7 @@ function getAirlineInfo(f) {
 
 function renderFlightList() {
   const tbody = document.getElementById('flight-list-body');
-  const displayed = state.flights.slice(0, MAX_DISPLAYED);
+  const displayed = sortFlights(state.flights.slice(0, MAX_DISPLAYED));
 
   if (displayed.length === 0) {
     tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--fg3)">${t('list.noFlights')}</td></tr>`;
@@ -702,7 +737,10 @@ function selectFlight(f) {
   if (f.flight) {
     fetchRoute(f.flight).then(route => {
       if (state.selectedFlight?.hex === f.hex) {
-        if (state.currentView === 'radar') updateRadarSidebar();
+        if (state.currentView === 'radar') {
+          updateRadarSidebar();
+          drawRadarRoute(f);
+        }
         renderFlightList();
       }
     });
@@ -736,6 +774,66 @@ function highlightRadarMarker(prevHex, newHex) {
 function centerMapOnFlight(f) {
   if (state.map && f.lat && f.lon) {
     state.map.panTo([f.lat, f.lon], { animate: true });
+  }
+}
+
+function clearRadarRoute() {
+  if (state.radarRouteLayer) {
+    state.map.removeLayer(state.radarRouteLayer);
+    state.radarRouteLayer = null;
+  }
+}
+
+function drawRadarRoute(f) {
+  if (!state.map) return;
+  clearRadarRoute();
+
+  const key = (f.flight || '').trim().toUpperCase();
+  const route = state.routeCache[key];
+  if (!route) return;
+
+  const origin = route.origin;
+  const dest = route.destination;
+  if (!origin && !dest) return;
+
+  const layer = L.layerGroup().addTo(state.map);
+  state.radarRouteLayer = layer;
+
+  const coords = [];
+
+  if (origin?.lat != null && origin?.lon != null) {
+    coords.push([origin.lat, origin.lon]);
+    const label = origin.iata ? `${origin.iata}: ${origin.name}` : (origin.name || origin.icao || '');
+    L.marker([origin.lat, origin.lon], {
+      icon: L.divIcon({ className:'radar-airport-marker', html:'<div style="width:8px;height:8px;background:var(--success);border:2px solid #fff;border-radius:50%;box-shadow:0 0 6px var(--success)"></div>', iconSize:[8,8], iconAnchor:[4,4] })
+    }).addTo(layer).bindPopup(label);
+  }
+
+  if (dest?.lat != null && dest?.lon != null) {
+    coords.push([dest.lat, dest.lon]);
+    const label = dest.iata ? `${dest.iata}: ${dest.name}` : (dest.name || dest.icao || '');
+    L.marker([dest.lat, dest.lon], {
+      icon: L.divIcon({ className:'radar-airport-marker', html:'<div style="width:8px;height:8px;background:var(--danger);border:2px solid #fff;border-radius:50%;box-shadow:0 0 6px var(--danger)"></div>', iconSize:[8,8], iconAnchor:[4,4] })
+    }).addTo(layer).bindPopup(label);
+  }
+
+  if (f.lat && f.lon) coords.push([f.lat, f.lon]);
+
+  if (origin?.lat != null && origin?.lon != null && dest?.lat != null && dest?.lon != null) {
+    L.polyline([[origin.lat, origin.lon], [dest.lat, dest.lon]], {
+      color: THEME_COLORS[state.theme] || '#3b82f6',
+      weight: 2, dashArray: '8,6', opacity: 0.6
+    }).addTo(layer);
+  }
+
+  if (coords.length > 1) {
+    state.map.fitBounds(L.latLngBounds(coords).pad(0.15), { animate: true, maxZoom: 10 });
+  }
+}
+
+function updateRadarRoute() {
+  if (state.selectedFlight && state.currentView === 'radar') {
+    drawRadarRoute(state.selectedFlight);
   }
 }
 
@@ -857,6 +955,7 @@ function hideRadarSidebar() {
   state.selectedFlight = null;
   document.getElementById('radar-sidebar').classList.add('hidden');
   highlightRadarMarker(prevHex, null);
+  clearRadarRoute();
   renderFlightList();
 }
 
@@ -1052,6 +1151,7 @@ function initRadarMap() {
     state.selectedFlight = null;
     hideRadarSidebar();
     highlightRadarMarker(prevHex, null);
+    clearRadarRoute();
     renderFlightList();
   });
 }
@@ -1378,10 +1478,35 @@ function updateScreensaverHUD() {
   document.getElementById('ss-info').textContent = `${state.flights.length} aircraft in range | ${state.source}`;
 }
 
+function updateSortIndicators() {
+  document.querySelectorAll('#flight-table th[data-sort]').forEach(th => {
+    const arrow = th.querySelector('.sort-arrow');
+    if (arrow) arrow.remove();
+    if (th.dataset.sort === state.sortKey) {
+      th.insertAdjacentHTML('beforeend', `<span class="sort-arrow">${state.sortAsc ? '\u25B2' : '\u25BC'}</span>`);
+    }
+  });
+}
+
 function initNavigation() {
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => switchView(btn.dataset.view));
   });
+
+  document.querySelectorAll('#flight-table th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.sort;
+      if (state.sortKey === key) {
+        state.sortAsc = !state.sortAsc;
+      } else {
+        state.sortKey = key;
+        state.sortAsc = true;
+      }
+      updateSortIndicators();
+      renderFlightList();
+    });
+  });
+  updateSortIndicators();
 
   document.getElementById('btn-settings').addEventListener('click', () => {
     document.getElementById('settings-overlay').classList.remove('hidden');

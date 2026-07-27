@@ -165,6 +165,10 @@ body {
 .alt-down { color:var(--danger); }
 .alt-level { color:var(--fg3); }
 
+#flight-table thead th { position:relative; }
+#flight-table thead th[data-sort] { cursor:pointer; user-select:none; }
+#flight-table thead th[data-sort]:hover { color:var(--accent); }
+.sort-arrow { font-size:10px; margin-left:3px; color:var(--accent); }
 .callsign-cell { font-family:var(--font-mono); font-weight:600; color:var(--accent2); }
 .callsign-link { cursor:pointer; text-decoration:underline; text-decoration-color:transparent; transition:text-decoration-color .2s; }
 .callsign-link:hover { text-decoration-color:var(--accent); }
