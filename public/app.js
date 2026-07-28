@@ -833,6 +833,7 @@ function renderFlightList() {
 function selectFlight(f) {
   const prevHex = state.selectedFlight?.hex;
   state.selectedFlight = f;
+  hideAirportSidebar();
   renderFlightList();
   showSpotterPanel(f);
   updateCompass(f.track);
@@ -1023,6 +1024,10 @@ function hideRadarSidebar() {
 
 function showAirportSidebar(a) {
   if (!a) return;
+  const prevHex = state.selectedFlight?.hex;
+  state.selectedFlight = null;
+  highlightRadarMarker(prevHex, null);
+  clearRadarRoute();
   document.getElementById('radar-sidebar').classList.add('hidden');
   const sb = document.getElementById('airport-sidebar');
   document.getElementById('asb-name').textContent = a.name || '---';
@@ -1090,13 +1095,6 @@ async function updateRadarRoute() {
     L.marker([route.destination.lat, route.destination.lon], {
       icon: createAirportIcon('var(--danger)')
     }).addTo(layer).on('click', () => showAirportSidebar(route.destination));
-  }
-
-  if (route?.origin?.lat != null && route.origin.lon != null && route.destination?.lat != null && route.destination.lon != null) {
-    L.polyline([[route.origin.lat, route.origin.lon], [route.destination.lat, route.destination.lon]], {
-      color: THEME_COLORS[state.theme] || '#3b82f6',
-      weight: 2, dashArray: '8,6', opacity: 0.4
-    }).addTo(layer);
   }
 
   try {
