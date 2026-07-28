@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "FlightRadar Local",
+    "title": "I Like Plains",
     "loading": "Ładowanie...",
     "noData": "Brak danych o lotach",
     "error": "Błąd ładowania danych",
@@ -59,7 +59,7 @@
   },
   "spotter": {
     "bearing": "Azymut",
-    "elevation": "Kierunek widoczności",
+    "elevation": "Kierunek",
     "distance": "Odległość",
     "flyover": "Przechodzi nad tobą",
     "minutes": "min",
@@ -75,7 +75,7 @@
   "radar": {
     "title": "Widok Radaru",
     "yourLocation": "Twoja Lokalizacja",
-    "rangeCircle": "Okres Zasięgu",
+    "rangeCircle": "Zasięg",
     "airports": "Lotniska w pobliżu",
     "noAirports": "Brak danych o lotniskach"
   },
@@ -114,7 +114,7 @@
     "localReceiverUrl": "URL Odbiornika",
     "fallbackToInternet": "Fallback na Internet",
     "flightAwareKey": "Klucz API FlightAware",
-    "hideSurface": "Ukryj Nawierzchniowe",
+    "hideSurface": "Ukryj Pojazdy Naziemne",
     "seconds": "sekund",
     "minutes": "minut",
     "colorTheme": "Kolor Motywu",

@@ -70,7 +70,7 @@
               <p id="spotter-route"></p>
             </div>
             <div id="spotter-compass-wrap">
-              <svg id="spotter-compass" viewBox="0 0 200 200"></svg>
+              <svg id="spotter-compass" viewBox="0 0 200 200" aria-hidden="true"></svg>
               <div id="spotter-elevation-label"></div>
             </div>
             <div id="spotter-prediction"></div>
@@ -82,7 +82,7 @@
       <div id="view-details" class="view">
         <div id="details-panel">
           <div id="details-header">
-            <button id="btn-back-to-list" class="icon-btn" data-i18n="app.close">&larr;</button>
+            <button id="btn-back-to-list" class="icon-btn" data-i18n="app.close" title="Back">&larr;</button>
             <h2 id="detail-callsign"></h2>
           </div>
           <div id="details-body">
@@ -151,8 +151,8 @@
               <div class="rsb-item"><label data-i18n="spotter.bearing">Bearing</label><span id="rsb-bearing"></span></div>
             </div>
             <div id="rsb-spotter-mini">
-              <svg id="rsb-compass" viewBox="0 0 200 200"></svg>
-              <div id="rsb-elevation"></div>
+              <svg id="rsb-compass" viewBox="0 0 200 200" aria-hidden="true"></svg>
+              <div id="rsb-ground-dist"></div>
             </div>
             <div id="rsb-prediction"></div>
           </div>
@@ -207,16 +207,16 @@
     </main>
 
     <nav id="bottom-nav">
-      <button class="nav-btn active" data-view="list" data-i18n="nav.list">
-        <svg viewBox="0 0 24 24"><use href="icons.svg#icon-list"/></svg>
+      <button class="nav-btn active" data-view="list" data-i18n="nav.list" title="List">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="icons.svg#icon-list"/></svg>
         <span>List</span>
       </button>
-      <button class="nav-btn" data-view="radar" data-i18n="nav.radar">
-        <svg viewBox="0 0 24 24"><use href="icons.svg#icon-radar"/></svg>
+      <button class="nav-btn" data-view="radar" data-i18n="nav.radar" title="Radar">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="icons.svg#icon-radar"/></svg>
         <span>Radar</span>
       </button>
-      <button class="nav-btn" data-view="stats" data-i18n="nav.stats">
-        <svg viewBox="0 0 24 24"><use href="icons.svg#icon-stats"/></svg>
+      <button class="nav-btn" data-view="stats" data-i18n="nav.stats" title="Stats">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="icons.svg#icon-stats"/></svg>
         <span>Stats</span>
       </button>
     </nav>
@@ -225,7 +225,7 @@
       <div id="settings-panel">
         <div id="settings-header">
           <h2 data-i18n="settings.title">Settings</h2>
-          <button id="btn-close-settings" class="icon-btn" data-i18n="app.close">&times;</button>
+            <button id="btn-close-settings" class="icon-btn" data-i18n="app.close" title="Close">&times;</button>
         </div>
         <div id="settings-body">
           <div id="settings-tabs">

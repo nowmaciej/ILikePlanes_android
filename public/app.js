@@ -923,6 +923,9 @@ function showRadarSidebar(f) {
 
   drawSidebarCompass(f._bearing || 0, f._elevation || 0);
 
+  const groundDist = f._distance != null ? (f._distance >= 10 ? Math.round(f._distance) + ' km' : f._distance.toFixed(2) + ' km') : '---';
+  document.getElementById('rsb-ground-dist').textContent = `Ground distance: ${groundDist}`;
+
   const pred = predictFlyover(f);
   const predEl = document.getElementById('rsb-prediction');
   if (pred) {
@@ -953,7 +956,6 @@ function drawSidebarCompass(bearingDeg, elevationDeg) {
     html += `<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central" fill="var(--fg2)" font-size="10" font-weight="600">${d}</text>`;
   });
   svg.innerHTML = html;
-  document.getElementById('rsb-elevation').textContent = `${elevationDeg.toFixed(1)}\u00B0 ${t('spotter.elevation')}`;
 }
 
 function hideRadarSidebar() {
@@ -1043,6 +1045,7 @@ function updateDetailPanel(f) {
 
   const logoWrap = document.getElementById('detail-airline-logo');
   logoWrap.src = getAirlineLogo(f.flight, f.r);
+  logoWrap.alt = getAirlineInfo(f).name || 'Airline logo';
   logoWrap.onerror = function() { this.src = ''; };
 
   document.getElementById('detail-from-city').textContent = f.origin?.name || f.origin?.icao || '---';
@@ -1054,7 +1057,9 @@ function updateDetailPanel(f) {
 
   if (f.flagImg) {
     document.getElementById('detail-flag-from').src = f.flagImg.from;
+    document.getElementById('detail-flag-from').alt = f.origin?.icao || 'Origin flag';
     document.getElementById('detail-flag-to').src = f.flagImg.to;
+    document.getElementById('detail-flag-to').alt = f.destination?.icao || 'Destination flag';
   }
 
   const progressFill = document.getElementById('detail-progress-fill');
@@ -1102,7 +1107,7 @@ function initDetailRouteMap(f) {
       const iconId = getCategoryIcon(f.category);
       const planeIcon = L.divIcon({
         className:'plane-marker',
-        html:`<svg class="map-icon" width="30" height="30" viewBox="0 0 24 24" style="color:var(--accent);transform:rotate(${f.track || 0}deg)"><use href="icons.svg#${iconId}"/></svg>`
+        html:`<svg class="map-icon" width="30" height="30" viewBox="0 0 24 24" aria-hidden="true" style="color:var(--accent);transform:rotate(${f.track || 0}deg)"><use href="icons.svg#${iconId}"/></svg>`
       });
       L.marker([f.lat, f.lon], { icon:planeIcon }).addTo(state.detailMap);
     }
