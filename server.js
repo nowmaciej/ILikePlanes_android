@@ -286,17 +286,17 @@ app.get('/api/source', (req, res) => {
 let openskyToken = null;
 let openskyTokenExpiry = 0;
 let openskyTokenClientId = '';
-const OPENSKY_TOKEN_URL = 'https://auth.opensky-network.org/oauth/token';
+const OPENSKY_TOKEN_URL = 'https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token';
 
 async function getOpenSkyToken(clientId, clientSecret) {
   if (!clientId || !clientSecret) return null;
   if (openskyToken && openskyTokenClientId === clientId && Date.now() < openskyTokenExpiry - 60000) return openskyToken;
   try {
-    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    const postData = `grant_type=client_credentials&client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}`;
     const data = await new Promise((resolve, reject) => {
-      const req = https.request(OPENSKY_TOKEN_URL, {
+      const tokenReq = https.request(OPENSKY_TOKEN_URL, {
         method: 'POST',
-        headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(postData) },
         timeout: 10000
       }, (res) => {
         let body = '';
@@ -307,9 +307,9 @@ async function getOpenSkyToken(clientId, clientSecret) {
           } else { reject(new Error(`HTTP ${res.statusCode}`)); }
         });
       });
-      req.on('error', reject);
-      req.write('grant_type=client_credentials');
-      req.end();
+      tokenReq.on('error', reject);
+      tokenReq.write(postData);
+      tokenReq.end();
     });
     openskyToken = data.access_token;
     openskyTokenExpiry = Date.now() + (data.expires_in || 1800) * 1000;
@@ -330,7 +330,7 @@ app.get('/api/opensky-track/:hex', async (req, res) => {
   const hex = req.params.hex.toLowerCase();
   try {
     const data = await new Promise((resolve, reject) => {
-      https.get(`https://opensky-network.org/api/tracks/all?icao24=${hex}&time=0`, {
+      const trackReq = https.get(`https://opensky-network.org/api/tracks/all?icao24=${hex}&time=0`, {
         headers: { 'Authorization': `Bearer ${token}` },
         timeout: 10000
       }, (resp) => {
@@ -342,7 +342,7 @@ app.get('/api/opensky-track/:hex', async (req, res) => {
           } else { reject(new Error(`HTTP ${resp.statusCode}`)); }
         });
       });
-      req.on('error', reject);
+      trackReq.on('error', reject);
     });
     if (!data || !data.path) return res.json({ trail: [] });
     const trail = data.path.map(wp => ({
