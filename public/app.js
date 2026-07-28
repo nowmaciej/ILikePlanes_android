@@ -35,6 +35,7 @@ const state = {
   openskyClientId: '',
   openskyClientSecret: '',
   openskyRouteData: false,
+  openskyCreditsRemaining: null,
   radarRouteLayer: null,
   position: null,
   locationMode: 'auto',
@@ -324,44 +325,34 @@ function updateOpenSkyRouteDisabled() {
   if (hasCreds) {
     info.classList.remove('hidden');
     getKey.classList.add('hidden');
-    fetchOpenSkyCredits();
   } else {
     info.classList.add('hidden');
     getKey.classList.remove('hidden');
   }
 }
 
-async function fetchOpenSkyCredits() {
-  if (!state.openskyClientId.trim() || !state.openskyClientSecret.trim()) return;
-  try {
-    const url = `/api/opensky-credits?client_id=${encodeURIComponent(state.openskyClientId)}&client_secret=${encodeURIComponent(state.openskyClientSecret)}`;
-    const data = await fetchJSON(url);
-    if (data.error) return;
-    const rem = data.remaining != null ? parseInt(data.remaining) : null;
-    const remainingEl = document.getElementById('opensky-credits-remaining');
-    const barEl = document.getElementById('opensky-credits-bar-fill');
-    const tierEl = document.getElementById('opensky-credits-tier');
-    if (rem == null) { remainingEl.textContent = '---'; return; }
-    let limit = 400;
-    if (rem >= 10000) limit = 14400;
-    else if (rem >= 5000) limit = 8000;
-    else if (rem >= 3000) limit = 4000;
-    remainingEl.textContent = `${rem} / ${limit}`;
-    const pct = limit > 0 ? (rem / limit * 100) : 0;
-    barEl.style.width = pct + '%';
-    barEl.style.background = pct > 50 ? 'var(--success)' : pct > 20 ? 'var(--warning)' : 'var(--danger)';
-    let tier = 'Anonymous';
-    if (limit >= 14400) tier = 'Licensed';
-    else if (limit >= 8000) tier = 'Active Feeder';
-    else if (limit >= 4000) tier = 'Standard';
-    if (data.retryAfter) {
-      tierEl.textContent = `Rate limited \u2014 retry after ${data.retryAfter}s`;
-      tierEl.style.color = 'var(--danger)';
-    } else {
-      tierEl.textContent = `Tier: ${tier}`;
-      tierEl.style.color = 'var(--fg3)';
-    }
-  } catch (e) {}
+async function fetchOpenSkyCredits() {}
+
+function displayCachedCredits() {
+  const rem = state.openskyCreditsRemaining;
+  const remainingEl = document.getElementById('opensky-credits-remaining');
+  const barEl = document.getElementById('opensky-credits-bar-fill');
+  const tierEl = document.getElementById('opensky-credits-tier');
+  if (rem == null) { remainingEl.textContent = '---'; barEl.style.width = '0%'; tierEl.textContent = ''; return; }
+  let limit = 400;
+  if (rem >= 10000) limit = 14400;
+  else if (rem >= 5000) limit = 8000;
+  else if (rem >= 3000) limit = 4000;
+  remainingEl.textContent = `${rem} / ${limit}`;
+  const pct = limit > 0 ? (rem / limit * 100) : 0;
+  barEl.style.width = pct + '%';
+  barEl.style.background = pct > 50 ? 'var(--success)' : pct > 20 ? 'var(--warning)' : 'var(--danger)';
+  let tier = 'Anonymous';
+  if (limit >= 14400) tier = 'Licensed';
+  else if (limit >= 8000) tier = 'Active Feeder';
+  else if (limit >= 4000) tier = 'Standard';
+  tierEl.textContent = `Tier: ${tier}`;
+  tierEl.style.color = 'var(--fg3)';
 }
 
 function initSettings() {
@@ -1157,6 +1148,7 @@ async function updateRadarRoute() {
   try {
     const openskyUrl = `/api/opensky-track/${f.hex}?client_id=${encodeURIComponent(state.openskyClientId)}&client_secret=${encodeURIComponent(state.openskyClientSecret)}`;
     const data = await fetchJSON(openskyUrl);
+    if (data.creditsRemaining != null) state.openskyCreditsRemaining = parseInt(data.creditsRemaining);
     if (state.selectedFlight?.hex !== f.hex || state.currentView !== 'radar') return;
     if (data?.trail?.length >= 2) {
       const coords = data.trail.map(p => [p.lat, p.lon]);
@@ -1602,7 +1594,7 @@ function initNavigation() {
 
   document.getElementById('btn-settings').addEventListener('click', () => {
     document.getElementById('settings-overlay').classList.remove('hidden');
-    if (state.openskyClientId.trim() && state.openskyClientSecret.trim()) fetchOpenSkyCredits();
+    if (state.openskyClientId.trim() && state.openskyClientSecret.trim()) displayCachedCredits();
   });
 
   document.getElementById('btn-close-settings').addEventListener('click', () => {
