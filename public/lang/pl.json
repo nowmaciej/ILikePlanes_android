@@ -79,6 +79,10 @@
     "airports": "Lotniska w pobliżu",
     "noAirports": "Brak danych o lotniskach"
   },
+  "airport": {
+    "country": "Kraj",
+    "flightsHere": "Loty"
+  },
   "stats": {
     "title": "Statystyki Sesji",
     "totalFlights": "Wszystkie Loty",

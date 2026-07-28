@@ -483,6 +483,17 @@ body {
 }
 #rsb-prediction:empty { display:none; }
 
+/* ===== AIRPORT SIDEBAR ===== */
+#asb-header {
+  display:flex; align-items:center; gap:10px; margin-bottom:12px;
+}
+#asb-header h3 { font-size:18px; font-weight:700; color:var(--accent); margin:0; }
+#asb-header .rsb-sub { margin:0; }
+.rsb-coords {
+  display:grid; grid-template-columns:1fr 1fr; gap:6px;
+}
+.airport-tower-marker { filter:drop-shadow(0 1px 3px rgba(0,0,0,0.4)); }
+
 /* ===== UTILITY ===== */
 .hidden { display:none !important; }
 @media (max-width:600px) {

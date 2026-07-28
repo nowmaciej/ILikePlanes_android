@@ -148,6 +148,29 @@ function formatRadiusUnit(nm) {
   return `${nm} NM`;
 }
 
+function createAirportIcon(color) {
+  const c = color || '#facc15';
+  return L.divIcon({
+    className: 'airport-tower-marker',
+    html: `<svg width="20" height="24" viewBox="0 0 20 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="6" y="20" width="8" height="2" rx="1" fill="${c}" opacity="0.6"/>
+      <polygon points="8,20 9,10 11,10 12,20" fill="${c}" opacity="0.8"/>
+      <line x1="10" y1="10" x2="10" y2="20" stroke="${c}" stroke-width="0.5" opacity="0.4"/>
+      <polygon points="5,10 4,6 16,6 15,10" fill="${c}"/>
+      <polygon points="4,6 2,2 18,2 16,6" fill="${c}" opacity="0.85"/>
+      <rect x="3" y="3" width="3" height="3" rx="0.5" fill="#fff" opacity="0.7"/>
+      <rect x="7" y="3" width="3" height="3" rx="0.5" fill="#fff" opacity="0.5"/>
+      <rect x="11" y="3" width="3" height="3" rx="0.5" fill="#fff" opacity="0.5"/>
+      <rect x="15" y="3" width="2" height="3" rx="0.5" fill="#fff" opacity="0.7"/>
+      <line x1="10" y1="2" x2="10" y2="0" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="10" cy="0" r="1" fill="${c}"/>
+    </svg>`,
+    iconSize: [20, 24],
+    iconAnchor: [10, 24],
+    popupAnchor: [0, -20]
+  });
+}
+
 function countryFlag(code) {
   if (!code || code.length !== 2) return '';
   return String.fromCodePoint(...[...code.toUpperCase()].map(c => 0x1F1E6 - 65 + c.charCodeAt(0)));
@@ -701,14 +724,9 @@ function updateAirportMarkers() {
       const id = a.icao || a.iata;
       if (!id || seen.has(id)) return;
       seen.add(id);
-      const label = a.iata ? `${a.iata}: ${a.name}` : (a.name || a.icao || '');
       L.marker([a.lat, a.lon], {
-        icon: L.divIcon({
-          className: 'radar-airport-marker',
-          html: `<div style="width:7px;height:7px;background:#facc15;border:2px solid #fff;border-radius:50%;box-shadow:0 0 4px rgba(0,0,0,.4)"></div>`,
-          iconSize: [7, 7], iconAnchor: [3.5, 3.5]
-        })
-      }).addTo(state.layerAirports).bindPopup(label);
+        icon: createAirportIcon('#facc15')
+      }).addTo(state.layerAirports).on('click', () => showAirportSidebar(a));
     });
   });
 }
@@ -1003,6 +1021,40 @@ function hideRadarSidebar() {
   renderFlightList();
 }
 
+function showAirportSidebar(a) {
+  if (!a) return;
+  document.getElementById('radar-sidebar').classList.add('hidden');
+  const sb = document.getElementById('airport-sidebar');
+  document.getElementById('asb-name').textContent = a.name || '---';
+  document.getElementById('asb-icao').textContent = a.icao || '---';
+  document.getElementById('asb-iata').textContent = a.iata || '---';
+  document.getElementById('asb-country').textContent = a.country || '---';
+  document.getElementById('asb-lat').textContent = a.lat != null ? a.lat.toFixed(4) + '\u00B0' : '---';
+  document.getElementById('asb-lon').textContent = a.lon != null ? a.lon.toFixed(4) + '\u00B0' : '---';
+  if (state.position && a.lat != null && a.lon != null) {
+    const d = haversine(state.position.lat, state.position.lon, a.lat, a.lon);
+    document.getElementById('asb-dist').textContent = formatDistance(d);
+    const brg = bearing(state.position.lat, state.position.lon, a.lat, a.lon);
+    document.getElementById('asb-bearing').textContent = `${Math.round(brg)}\u00B0 ${bearingToCardinal(brg)}`;
+  } else {
+    document.getElementById('asb-dist').textContent = '---';
+    document.getElementById('asb-bearing').textContent = '---';
+  }
+  const flightsHere = state.flights.filter(f => {
+    const key = (f.flight || '').trim().toUpperCase();
+    const route = state.routeCache[key];
+    if (!route) return false;
+    return (route.origin?.icao === a.icao || route.origin?.iata === a.iata ||
+            route.destination?.icao === a.icao || route.destination?.iata === a.iata);
+  });
+  document.getElementById('asb-flights').textContent = flightsHere.length;
+  sb.classList.remove('hidden');
+}
+
+function hideAirportSidebar() {
+  document.getElementById('airport-sidebar').classList.add('hidden');
+}
+
 function updateRadarSidebar() {
   if (!state.selectedFlight) return;
   const f = state.flights.find(flight => flight.hex === state.selectedFlight.hex);
@@ -1029,17 +1081,15 @@ async function updateRadarRoute() {
   const route = state.routeCache[key];
 
   if (route?.origin?.lat != null && route.origin.lon != null) {
-    const label = route.origin.iata ? `${route.origin.iata}: ${route.origin.name}` : (route.origin.name || route.origin.icao || '');
     L.marker([route.origin.lat, route.origin.lon], {
-      icon: L.divIcon({ className:'radar-airport-marker', html:'<div style="width:8px;height:8px;background:var(--success);border:2px solid #fff;border-radius:50%;box-shadow:0 0 6px var(--success)"></div>', iconSize:[8,8], iconAnchor:[4,4] })
-    }).addTo(layer).bindPopup(label);
+      icon: createAirportIcon('var(--success)')
+    }).addTo(layer).on('click', () => showAirportSidebar(route.origin));
   }
 
   if (route?.destination?.lat != null && route.destination.lon != null) {
-    const label = route.destination.iata ? `${route.destination.iata}: ${route.destination.name}` : (route.destination.name || route.destination.icao || '');
     L.marker([route.destination.lat, route.destination.lon], {
-      icon: L.divIcon({ className:'radar-airport-marker', html:'<div style="width:8px;height:8px;background:var(--danger);border:2px solid #fff;border-radius:50%;box-shadow:0 0 6px var(--danger)"></div>', iconSize:[8,8], iconAnchor:[4,4] })
-    }).addTo(layer).bindPopup(label);
+      icon: createAirportIcon('var(--danger)')
+    }).addTo(layer).on('click', () => showAirportSidebar(route.destination));
   }
 
   if (route?.origin?.lat != null && route.origin.lon != null && route.destination?.lat != null && route.destination.lon != null) {
@@ -1181,14 +1231,14 @@ function initDetailRouteMap(f) {
   if (f.origin?.lat && f.origin?.lon) {
     coords.push([f.origin.lat, f.origin.lon]);
     L.marker([f.origin.lat, f.origin.lon], {
-      icon: L.divIcon({ className:'airport-marker', html:'<div style="color:var(--success);font-size:16px">&#9992;</div>' })
-    }).addTo(state.detailMap).bindPopup(f.origin.icao || '');
+      icon: createAirportIcon('var(--success)')
+    }).addTo(state.detailMap).on('click', () => showAirportSidebar(f.origin));
   }
   if (f.destination?.lat && f.destination?.lon) {
     coords.push([f.destination.lat, f.destination.lon]);
     L.marker([f.destination.lat, f.destination.lon], {
-      icon: L.divIcon({ className:'airport-marker', html:'<div style="color:var(--danger);font-size:16px">&#9992;</div>' })
-    }).addTo(state.detailMap).bindPopup(f.destination.icao || '');
+      icon: createAirportIcon('var(--danger)')
+    }).addTo(state.detailMap).on('click', () => showAirportSidebar(f.destination));
   }
 
   if (coords.length >= 2) {
@@ -1250,6 +1300,7 @@ function initRadarMap() {
     const prevHex = state.selectedFlight?.hex;
     state.selectedFlight = null;
     hideRadarSidebar();
+    hideAirportSidebar();
     highlightRadarMarker(prevHex, null);
     clearRadarRoute();
     renderFlightList();
@@ -1443,7 +1494,7 @@ async function fetchMETAR() {
 
 function switchView(view) {
   if (view === 'radar') initRadarMap();
-  if (view !== 'radar') hideRadarSidebar();
+  if (view !== 'radar') { hideRadarSidebar(); hideAirportSidebar(); }
 
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(`view-${view}`).classList.add('active');
@@ -1528,6 +1579,7 @@ function initNavigation() {
   });
 
   document.getElementById('radar-sidebar-close').addEventListener('click', hideRadarSidebar);
+  document.getElementById('airport-sidebar-close').addEventListener('click', hideAirportSidebar);
 
   document.getElementById('radius-slider').addEventListener('input', e => {
     state.radius = parseInt(e.target.value);
@@ -1551,7 +1603,10 @@ function initNavigation() {
 
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      if (!document.getElementById('radar-sidebar').classList.contains('hidden')) {
+      if (!document.getElementById('airport-sidebar').classList.contains('hidden')) {
+        hideAirportSidebar();
+      }
+      else if (!document.getElementById('radar-sidebar').classList.contains('hidden')) {
         hideRadarSidebar();
       }
       else if (!document.getElementById('settings-overlay').classList.contains('hidden')) {

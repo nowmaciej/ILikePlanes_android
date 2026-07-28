@@ -79,6 +79,10 @@
     "airports": "Nearby Airports",
     "noAirports": "No airport data"
   },
+  "airport": {
+    "country": "Country",
+    "flightsHere": "Flights"
+  },
   "stats": {
     "title": "Session Statistics",
     "totalFlights": "Total Flights",

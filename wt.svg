@@ -1,0 +1,67 @@
+# Create HTML and SVG content for a clean, sharp, angular air traffic control tower icon
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <style>
+      .bg { fill: #1e293b; rx: 12px; }
+      .stroke-main { stroke: #0f172a; stroke-width: 3.5; stroke-linejoin: miter; stroke-linecap: square; }
+      .tower-body { fill: #334155; }
+      .tower-dark { fill: #1e293b; }
+      .tower-light { fill: #475569; }
+      .glass { fill: #38bdf8; }
+      .glass-glow { fill: #fbbf24; }
+      .signal { fill: none; stroke: #fbbf24; stroke-width: 3; stroke-linecap: square; stroke-linejoin: miter; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="100" height="100" class="bg" />
+
+  <!-- Base platform -->
+  <rect x="20" y="88" width="60" height="4" fill="#0f172a" />
+
+  <!-- Tower Trunk (Angular Grid Structure) -->
+  <polygon points="32,88 36,52 64,52 68,88" class="tower-body stroke-main" />
+  <!-- Vertical division line -->
+  <line x1="50" y1="52" x2="50" y2="88" stroke="#0f172a" stroke-width="3" />
+  <!-- Horizontal lattice lines -->
+  <line x1="33.5" y1="76" x2="66.5" y2="76" stroke="#0f172a" stroke-width="2.5" />
+  <line x1="34.8" y1="64" x2="65.2" y2="64" stroke="#0f172a" stroke-width="2.5" />
+
+  <!-- Lower Cab Support Bracket -->
+  <polygon points="30,52 24,44 76,44 70,52" class="tower-light stroke-main" />
+
+  <!-- Control Cab Glass Windows (Angular / Geometric) -->
+  <polygon points="24,44 20,28 80,28 76,44" class="tower-body stroke-main" />
+  
+  <!-- Windows Panes -->
+  <polygon points="26,42 22.5,30 36,30 37,42" class="glass-glow" />
+  <polygon points="39,42 38,30 50,30 50,42" class="glass" />
+  <polygon points="50,42 50,30 62,30 61,42" class="glass" />
+  <polygon points="63,42 64,30 77.5,30 74,42" class="glass-glow" />
+
+  <!-- Cab Window Frames Outer Contour -->
+  <polygon points="24,44 20,28 80,28 76,44" fill="none" class="stroke-main" />
+  <line x1="37.5" y1="28" x2="38" y2="44" stroke="#0f172a" stroke-width="2.5" />
+  <line x1="50" y1="28" x2="50" y2="44" stroke="#0f172a" stroke-width="2.5" />
+  <line x1="62.5" y1="28" x2="62" y2="44" stroke="#0f172a" stroke-width="2.5" />
+
+  <!-- Cab Roof / Upper Deck -->
+  <polygon points="20,28 26,22 74,22 80,28" class="tower-light stroke-main" />
+
+  <!-- Radar Dish Assembly on Top -->
+  <rect x="36" y="16" width="20" height="6" class="tower-dark stroke-main" />
+  <line x1="46" y1="22" x2="46" y2="16" stroke="#0f172a" stroke-width="3" />
+  <!-- Radar grill lines -->
+  <line x1="40" y1="16" x2="40" y2="22" stroke="#475569" stroke-width="1.5" />
+  <line x1="44" y1="16" x2="44" y2="22" stroke="#475569" stroke-width="1.5" />
+  <line x1="48" y1="16" x2="48" y2="22" stroke="#475569" stroke-width="1.5" />
+  <line x1="52" y1="16" x2="52" y2="22" stroke="#475569" stroke-width="1.5" />
+
+  <!-- Antenna Mast -->
+  <line x1="66" y1="22" x2="66" y2="10" stroke="#0f172a" stroke-width="3" />
+  <polygon points="64,16 66,10 68,16" fill="#0f172a" />
+
+  <!-- Lightning / Signal Bolts (Sharp & Angular) -->
+  <path d="M 72 10 L 80 10 L 76 15 L 84 15" class="signal" />
+  <path d="M 70 18 L 76 18 L 73 22 L 78 22" class="signal" stroke-width="2" />
+</svg>
