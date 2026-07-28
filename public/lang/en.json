@@ -25,6 +25,7 @@
   "list": {
     "airline": "Airline",
     "type": "Type",
+    "category": "Category",
     "altitude": "Altitude",
     "speed": "Speed",
     "distance": "Distance",

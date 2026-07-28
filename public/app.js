@@ -688,6 +688,7 @@ function getSortValue(f, key) {
     }
     case 'airline': return (getAirlineInfo(f).name || '').toLowerCase();
     case 'type': return (f.t || '').toLowerCase();
+    case 'category': return (f._categoryLabel || '').toLowerCase();
     case 'altitude': return f.alt_baro == null || f.alt_baro === 'ground' ? -1 : f.alt_baro;
     case 'speed': return f.gs ?? -1;
     case 'distance': return f._distance ?? 99999;
@@ -719,7 +720,7 @@ function renderFlightList() {
   const displayed = sortFlights(getVisibleFlights());
 
   if (displayed.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--fg3)">${t('list.noFlights')}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--fg3)">${t('list.noFlights')}</td></tr>`;
     return;
   }
 
@@ -764,6 +765,7 @@ function renderFlightList() {
 
     row.appendChild(h('td', { text: airline.name }));
     row.appendChild(h('td', { text: f.t || '---', title: f.t }));
+    row.appendChild(h('td', { text: f._categoryLabel || '---' }));
     row.appendChild(h('td', { class:'alt-cell', html: `<span class="alt-arrow alt-${altDir}">${arrowChar}</span> ${formatAltitude(f.alt_baro, state.units)}` }));
     row.appendChild(h('td', { class:'speed-cell', text: formatSpeed(f.gs, state.units) }));
     row.appendChild(h('td', { class:'distance-cell', text: f._distance != null ? formatNM(f._distance) : '---' }));
