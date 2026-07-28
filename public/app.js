@@ -31,6 +31,10 @@ const state = {
   localReceiver: false,
   receiverUrl: '',
   faKey: '',
+  openskyClientId: '',
+  openskyClientSecret: '',
+  openskyRouteData: false,
+  radarRouteLayer: null,
   position: null,
   locationMode: 'auto',
   manualLocation: null,
@@ -247,6 +251,9 @@ function loadSettings() {
   state.localReceiver = saved('local', 'false') === 'true';
   state.receiverUrl = saved('receiver-url', '');
   state.faKey = saved('fa-key', '');
+  state.openskyClientId = saved('opensky-client-id', '');
+  state.openskyClientSecret = saved('opensky-client-secret', '');
+  state.openskyRouteData = saved('opensky-route-data', 'false') === 'true';
   state.locationMode = saved('location-mode', 'auto');
   const ml = saved('manual-location', null);
   state.manualLocation = ml ? JSON.parse(ml) : null;
@@ -264,6 +271,9 @@ function saveSettings() {
   set('local', state.localReceiver);
   set('receiver-url', state.receiverUrl);
   set('fa-key', state.faKey);
+  set('opensky-client-id', state.openskyClientId);
+  set('opensky-client-secret', state.openskyClientSecret);
+  set('opensky-route-data', state.openskyRouteData);
   set('location-mode', state.locationMode);
   set('manual-location', state.manualLocation ? JSON.stringify(state.manualLocation) : '');
 }
@@ -282,6 +292,9 @@ function initSettings() {
   document.getElementById('setting-local').checked = state.localReceiver;
   document.getElementById('setting-receiver-url').value = state.receiverUrl;
   document.getElementById('setting-fa-key').value = state.faKey;
+  document.getElementById('setting-opensky-client-id').value = state.openskyClientId;
+  document.getElementById('setting-opensky-client-secret').value = state.openskyClientSecret;
+  document.getElementById('setting-opensky-route').checked = state.openskyRouteData;
   document.getElementById('setting-hide-surface').checked = state.hideSurface;
   document.getElementById('setting-night').checked = state.nightMode;
   document.getElementById('radius-slider').value = state.radius;
@@ -328,6 +341,16 @@ function initSettings() {
   });
   document.getElementById('setting-fa-key').addEventListener('input', e => {
     state.faKey = e.target.value; saveSettings();
+  });
+  document.getElementById('setting-opensky-client-id').addEventListener('input', e => {
+    state.openskyClientId = e.target.value; saveSettings();
+  });
+  document.getElementById('setting-opensky-client-secret').addEventListener('input', e => {
+    state.openskyClientSecret = e.target.value; saveSettings();
+  });
+  document.getElementById('setting-opensky-route').addEventListener('change', e => {
+    state.openskyRouteData = e.target.checked; saveSettings();
+    if (state.selectedFlight && state.currentView === 'radar') updateRadarRoute();
   });
   document.getElementById('setting-hide-surface').addEventListener('change', e => {
     state.hideSurface = e.target.checked; saveSettings(); renderFlightList(); updateFlightCount();
@@ -787,6 +810,7 @@ function selectFlight(f) {
   if (state.currentView === 'radar') {
     showRadarSidebar(f);
     highlightRadarMarker(prevHex, f.hex);
+    updateRadarRoute();
   }
   centerMapOnFlight(f);
 
@@ -797,6 +821,7 @@ function selectFlight(f) {
       if (state.selectedFlight?.hex === f.hex) {
         if (state.currentView === 'radar') {
           updateRadarSidebar();
+          updateRadarRoute();
         }
         renderFlightList();
       }
@@ -963,6 +988,7 @@ function hideRadarSidebar() {
   state.selectedFlight = null;
   document.getElementById('radar-sidebar').classList.add('hidden');
   highlightRadarMarker(prevHex, null);
+  clearRadarRoute();
   renderFlightList();
 }
 
@@ -970,6 +996,60 @@ function updateRadarSidebar() {
   if (!state.selectedFlight) return;
   const f = state.flights.find(flight => flight.hex === state.selectedFlight.hex);
   if (f) showRadarSidebar(f);
+}
+
+function clearRadarRoute() {
+  if (state.radarRouteLayer) {
+    state.map.removeLayer(state.radarRouteLayer);
+    state.radarRouteLayer = null;
+  }
+}
+
+async function updateRadarRoute() {
+  if (!state.map) return;
+  clearRadarRoute();
+  if (!state.openskyRouteData || !state.selectedFlight || state.currentView !== 'radar') return;
+
+  const f = state.selectedFlight;
+  const layer = L.layerGroup().addTo(state.map);
+  state.radarRouteLayer = layer;
+
+  const key = (f.flight || '').trim().toUpperCase();
+  const route = state.routeCache[key];
+
+  if (route?.origin?.lat != null && route.origin.lon != null) {
+    const label = route.origin.iata ? `${route.origin.iata}: ${route.origin.name}` : (route.origin.name || route.origin.icao || '');
+    L.marker([route.origin.lat, route.origin.lon], {
+      icon: L.divIcon({ className:'radar-airport-marker', html:'<div style="width:8px;height:8px;background:var(--success);border:2px solid #fff;border-radius:50%;box-shadow:0 0 6px var(--success)"></div>', iconSize:[8,8], iconAnchor:[4,4] })
+    }).addTo(layer).bindPopup(label);
+  }
+
+  if (route?.destination?.lat != null && route.destination.lon != null) {
+    const label = route.destination.iata ? `${route.destination.iata}: ${route.destination.name}` : (route.destination.name || route.destination.icao || '');
+    L.marker([route.destination.lat, route.destination.lon], {
+      icon: L.divIcon({ className:'radar-airport-marker', html:'<div style="width:8px;height:8px;background:var(--danger);border:2px solid #fff;border-radius:50%;box-shadow:0 0 6px var(--danger)"></div>', iconSize:[8,8], iconAnchor:[4,4] })
+    }).addTo(layer).bindPopup(label);
+  }
+
+  if (route?.origin?.lat != null && route.origin.lon != null && route.destination?.lat != null && route.destination.lon != null) {
+    L.polyline([[route.origin.lat, route.origin.lon], [route.destination.lat, route.destination.lon]], {
+      color: THEME_COLORS[state.theme] || '#3b82f6',
+      weight: 2, dashArray: '8,6', opacity: 0.4
+    }).addTo(layer);
+  }
+
+  try {
+    const openskyUrl = `/api/opensky-track/${f.hex}?client_id=${encodeURIComponent(state.openskyClientId)}&client_secret=${encodeURIComponent(state.openskyClientSecret)}`;
+    const data = await fetchJSON(openskyUrl);
+    if (state.selectedFlight?.hex !== f.hex || state.currentView !== 'radar') return;
+    if (data?.trail?.length >= 2) {
+      const coords = data.trail.map(p => [p.lat, p.lon]);
+      L.polyline(coords, {
+        color: THEME_COLORS[state.theme] || '#3b82f6',
+        weight: 3, opacity: 0.85
+      }).addTo(layer);
+    }
+  } catch (e) {}
 }
 
 function drawSpotterCompass(bearingDeg, elevationDeg) {
@@ -1160,6 +1240,7 @@ function initRadarMap() {
     state.selectedFlight = null;
     hideRadarSidebar();
     highlightRadarMarker(prevHex, null);
+    clearRadarRoute();
     renderFlightList();
   });
 }

@@ -283,6 +283,78 @@ app.get('/api/source', (req, res) => {
   res.json({ active: activeSource.name, sources: ADSB_SOURCES.map(s => s.name) });
 });
 
+let openskyToken = null;
+let openskyTokenExpiry = 0;
+let openskyTokenClientId = '';
+const OPENSKY_TOKEN_URL = 'https://auth.opensky-network.org/oauth/token';
+
+async function getOpenSkyToken(clientId, clientSecret) {
+  if (!clientId || !clientSecret) return null;
+  if (openskyToken && openskyTokenClientId === clientId && Date.now() < openskyTokenExpiry - 60000) return openskyToken;
+  try {
+    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    const data = await new Promise((resolve, reject) => {
+      const req = https.request(OPENSKY_TOKEN_URL, {
+        method: 'POST',
+        headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+        timeout: 10000
+      }, (res) => {
+        let body = '';
+        res.on('data', c => body += c);
+        res.on('end', () => {
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            try { resolve(JSON.parse(body)); } catch(e) { reject(new Error('Invalid JSON')); }
+          } else { reject(new Error(`HTTP ${res.statusCode}`)); }
+        });
+      });
+      req.on('error', reject);
+      req.write('grant_type=client_credentials');
+      req.end();
+    });
+    openskyToken = data.access_token;
+    openskyTokenExpiry = Date.now() + (data.expires_in || 1800) * 1000;
+    openskyTokenClientId = clientId;
+    return openskyToken;
+  } catch (err) {
+    console.log('[OpenSky] Token error:', err.message);
+    openskyToken = null;
+    return null;
+  }
+}
+
+app.get('/api/opensky-track/:hex', async (req, res) => {
+  const clientId = req.query.client_id || '';
+  const clientSecret = req.query.client_secret || '';
+  const token = await getOpenSkyToken(clientId, clientSecret);
+  if (!token) return res.json({ trail: [], error: 'no_token' });
+  const hex = req.params.hex.toLowerCase();
+  try {
+    const data = await new Promise((resolve, reject) => {
+      https.get(`https://opensky-network.org/api/tracks/all?icao24=${hex}&time=0`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        timeout: 10000
+      }, (resp) => {
+        let body = '';
+        resp.on('data', c => body += c);
+        resp.on('end', () => {
+          if (resp.statusCode >= 200 && resp.statusCode < 300) {
+            try { resolve(JSON.parse(body)); } catch(e) { reject(new Error('Invalid JSON')); }
+          } else { reject(new Error(`HTTP ${resp.statusCode}`)); }
+        });
+      });
+      req.on('error', reject);
+    });
+    if (!data || !data.path) return res.json({ trail: [] });
+    const trail = data.path.map(wp => ({
+      lat: wp[1], lon: wp[2], alt: wp[3] != null ? Math.round(wp[3] * 3.28084) : null,
+      track: wp[4], onGround: wp[5], ts: wp[0] * 1000
+    })).filter(p => p.lat != null && p.lon != null);
+    res.json({ trail, startTime: data.startTime, callsign: data.callsign });
+  } catch (err) {
+    res.json({ trail: [], error: err.message });
+  }
+});
+
 app.get('/api/health', async (req, res) => {
   const health = [];
   for (const source of ADSB_SOURCES) {

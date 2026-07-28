@@ -34,3 +34,6 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+#Credentials
+OpenSky.json
