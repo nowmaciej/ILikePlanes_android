@@ -53,7 +53,6 @@ const state = {
   myLocationMarker: null,
   layerAirports: null,
   layerPlanes: null,
-  radarRouteLayer: null,
   metarData: null,
   translations: { en: {}, pl: {} },
   routeCache: {},
@@ -549,7 +548,6 @@ function processFlights() {
     if (state.currentView === 'list') renderFlightList();
     if (state.selectedFlight && state.currentView === 'radar') {
       updateRadarSidebar();
-      drawRadarRoute(state.selectedFlight);
     }
   });
 }
@@ -788,7 +786,6 @@ function selectFlight(f) {
       if (state.selectedFlight?.hex === f.hex) {
         if (state.currentView === 'radar') {
           updateRadarSidebar();
-          drawRadarRoute(f);
         }
         renderFlightList();
       }
@@ -842,65 +839,6 @@ function centerMapOnFlight(f) {
   });
 }
 
-function clearRadarRoute() {
-  if (state.radarRouteLayer) {
-    state.map.removeLayer(state.radarRouteLayer);
-    state.radarRouteLayer = null;
-  }
-}
-
-function drawRadarRoute(f) {
-  if (!state.map) return;
-  clearRadarRoute();
-
-  const key = (f.flight || '').trim().toUpperCase();
-  const route = state.routeCache[key];
-  console.log('[DRAW ROUTE]', key, route);
-  if (!route) return;
-
-  const origin = route.origin;
-  const dest = route.destination;
-  console.log('[DRAW ROUTE] origin:', origin, 'dest:', dest);
-  if (!origin && !dest) return;
-
-  const layer = L.layerGroup().addTo(state.map);
-  state.radarRouteLayer = layer;
-
-  const coords = [];
-
-  if (origin?.lat != null && origin?.lon != null) {
-    coords.push([origin.lat, origin.lon]);
-    const label = origin.iata ? `${origin.iata}: ${origin.name}` : (origin.name || origin.icao || '');
-    L.marker([origin.lat, origin.lon], {
-      icon: L.divIcon({ className:'radar-airport-marker', html:'<div style="width:8px;height:8px;background:var(--success);border:2px solid #fff;border-radius:50%;box-shadow:0 0 6px var(--success)"></div>', iconSize:[8,8], iconAnchor:[4,4] })
-    }).addTo(layer).bindPopup(label);
-  }
-
-  if (dest?.lat != null && dest?.lon != null) {
-    coords.push([dest.lat, dest.lon]);
-    const label = dest.iata ? `${dest.iata}: ${dest.name}` : (dest.name || dest.icao || '');
-    L.marker([dest.lat, dest.lon], {
-      icon: L.divIcon({ className:'radar-airport-marker', html:'<div style="width:8px;height:8px;background:var(--danger);border:2px solid #fff;border-radius:50%;box-shadow:0 0 6px var(--danger)"></div>', iconSize:[8,8], iconAnchor:[4,4] })
-    }).addTo(layer).bindPopup(label);
-  }
-
-  if (f.lat && f.lon) coords.push([f.lat, f.lon]);
-
-  if (origin?.lat != null && origin?.lon != null && dest?.lat != null && dest?.lon != null) {
-    L.polyline([[origin.lat, origin.lon], [dest.lat, dest.lon]], {
-      color: THEME_COLORS[state.theme] || '#3b82f6',
-      weight: 2, dashArray: '8,6', opacity: 0.6
-    }).addTo(layer);
-  }
-
-  console.log('[DRAW ROUTE] coords:', coords);
-}
-
-function updateRadarRoute() {
-  if (state.selectedFlight && state.currentView === 'radar') {
-    drawRadarRoute(state.selectedFlight);
-  }
-}
 
 function showSpotterPanel(f) {
   const panel = document.getElementById('spotter-panel');
@@ -1012,7 +950,6 @@ function hideRadarSidebar() {
   state.selectedFlight = null;
   document.getElementById('radar-sidebar').classList.add('hidden');
   highlightRadarMarker(prevHex, null);
-  clearRadarRoute();
   renderFlightList();
 }
 
@@ -1207,7 +1144,6 @@ function initRadarMap() {
     state.selectedFlight = null;
     hideRadarSidebar();
     highlightRadarMarker(prevHex, null);
-    clearRadarRoute();
     renderFlightList();
   });
 }
