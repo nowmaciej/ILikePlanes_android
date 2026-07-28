@@ -238,7 +238,14 @@
           <button id="btn-close-settings" class="icon-btn" data-i18n="app.close">&times;</button>
         </div>
         <div id="settings-body">
-          <section class="settings-section">
+          <div id="settings-tabs">
+            <button class="settings-tab active" data-tab="general" data-i18n="settings.general">General</button>
+            <button class="settings-tab" data-tab="appearance" data-i18n="settings.appearance">Appearance</button>
+            <button class="settings-tab" data-tab="location" data-i18n="settings.location">Location</button>
+            <button class="settings-tab" data-tab="data" data-i18n="settings.data">Data</button>
+          </div>
+          <div id="settings-panels">
+          <section class="settings-section" data-panel="general">
             <h3 data-i18n="settings.general">General</h3>
             <div class="setting-row">
               <label data-i18n="settings.language">Language</label>
@@ -270,7 +277,7 @@
               </select>
             </div>
           </section>
-          <section class="settings-section">
+          <section class="settings-section" data-panel="appearance">
             <h3 data-i18n="settings.appearance">Appearance</h3>
             <div class="setting-row">
               <label data-i18n="settings.nightMode">Night Mode</label>
@@ -294,7 +301,7 @@
               </select>
             </div>
           </section>
-          <section class="settings-section">
+          <section class="settings-section" data-panel="location">
             <h3 data-i18n="settings.location">Location</h3>
             <div class="setting-row">
               <label data-i18n="settings.locationMode">Location Mode</label>
@@ -321,7 +328,7 @@
               </div>
             </div>
           </section>
-          <section class="settings-section">
+          <section class="settings-section" data-panel="data">
             <h3 data-i18n="settings.data">Data Source</h3>
             <div class="setting-row">
               <label data-i18n="settings.localReceiver">Local Receiver</label>
@@ -339,6 +346,7 @@
               <input type="password" id="setting-fa-key" placeholder="Optional">
             </div>
           </section>
+          </div>
         </div>
       </div>
     </div>

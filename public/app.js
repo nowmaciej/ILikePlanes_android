@@ -1506,6 +1506,15 @@ function initNavigation() {
     }
   });
 
+  const tabs = document.querySelectorAll('.settings-tab');
+  const sections = document.querySelectorAll('.settings-section[data-panel]');
+  function switchTab(tabName) {
+    tabs.forEach(tb => tb.classList.toggle('active', tb.dataset.tab === tabName));
+    sections.forEach(s => s.classList.toggle('active', s.dataset.panel === tabName));
+  }
+  tabs.forEach(tb => tb.addEventListener('click', () => switchTab(tb.dataset.tab)));
+  switchTab('general');
+
   document.getElementById('btn-screensaver').addEventListener('click', () => {
     if (state.screensaverActive) deactivateScreensaver();
     else activateScreensaver();

@@ -338,8 +338,23 @@ body {
   padding:16px; border-bottom:1px solid var(--border);
 }
 #settings-header h2 { font-size:18px; color:var(--accent2); }
-#settings-body { padding:16px; overflow:auto; flex:1; }
-.settings-section { margin-bottom:20px; }
+#settings-body { padding:0; overflow:auto; flex:1; display:flex; flex-direction:column; }
+#settings-tabs {
+  display:flex; gap:0; border-bottom:1px solid var(--border);
+  background:var(--bg3); flex-shrink:0;
+}
+.settings-tab {
+  flex:1; padding:10px 8px; border:none; background:transparent;
+  color:var(--fg3); font-size:12px; font-weight:600; cursor:pointer;
+  border-bottom:2px solid transparent; transition:all .2s;
+  text-transform:uppercase; letter-spacing:0.5px;
+}
+.settings-tab:hover { color:var(--fg); background:var(--bg2); }
+.settings-tab.active { color:var(--accent2); border-bottom-color:var(--accent2); }
+#settings-panels { padding:16px; overflow:auto; flex:1; }
+.settings-section { display:none; }
+.settings-section.active { display:block; }
+.settings-section { margin-bottom:0; }
 .settings-section h3 {
   font-size:12px; color:var(--fg3); text-transform:uppercase;
   letter-spacing:1px; margin-bottom:10px; padding-bottom:6px;
