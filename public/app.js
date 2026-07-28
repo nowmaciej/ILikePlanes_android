@@ -26,6 +26,7 @@ const state = {
   nightMode: false,
   units: 'metric',
   radius: 250,
+  rangeUnit: 'nm',
   refreshRate: 8,
   hideSurface: false,
   localReceiver: false,
@@ -137,8 +138,14 @@ function formatDistance(km) {
   return `${(km * KM_TO_MI).toFixed(1)} mi`;
 }
 
-function formatNM(km) {
+function formatRange(km) {
+  if (state.rangeUnit === 'km') return `${km.toFixed(1)} km`;
   return `${(km / NM_TO_KM).toFixed(1)} NM`;
+}
+
+function formatRadiusUnit(nm) {
+  if (state.rangeUnit === 'km') return `${(nm * NM_TO_KM).toFixed(0)} km`;
+  return `${nm} NM`;
 }
 
 function countryFlag(code) {
@@ -246,6 +253,7 @@ function loadSettings() {
   state.nightMode = saved('night', 'false') === 'true';
   state.units = saved('units', 'metric');
   state.radius = parseInt(saved('radius', '250'));
+  state.rangeUnit = saved('range-unit', 'nm');
   state.refreshRate = parseInt(saved('refresh', '8'));
   state.hideSurface = saved('hide-surface', 'false') === 'true';
   state.localReceiver = saved('local', 'false') === 'true';
@@ -266,6 +274,7 @@ function saveSettings() {
   set('night', state.nightMode);
   set('units', state.units);
   set('radius', state.radius);
+  set('range-unit', state.rangeUnit);
   set('refresh', state.refreshRate);
   set('hide-surface', state.hideSurface);
   set('local', state.localReceiver);
@@ -287,7 +296,8 @@ function initSettings() {
   document.getElementById('setting-language').value = state.lang;
   document.getElementById('setting-units').value = state.units;
   document.getElementById('setting-radius').value = state.radius;
-  document.getElementById('setting-radius-val').textContent = `${state.radius} NM`;
+  document.getElementById('setting-radius-val').textContent = formatRadiusUnit(state.radius);
+  document.getElementById('setting-range-unit').value = state.rangeUnit;
   document.getElementById('setting-refresh').value = state.refreshRate;
   document.getElementById('setting-local').checked = state.localReceiver;
   document.getElementById('setting-receiver-url').value = state.receiverUrl;
@@ -298,8 +308,8 @@ function initSettings() {
   document.getElementById('setting-hide-surface').checked = state.hideSurface;
   document.getElementById('setting-night').checked = state.nightMode;
   document.getElementById('radius-slider').value = state.radius;
-  document.getElementById('radius-value').textContent = `${state.radius} NM`;
-  document.getElementById('range-badge').textContent = `${state.radius} NM`;
+  document.getElementById('radius-value').textContent = formatRadiusUnit(state.radius);
+  document.getElementById('range-badge').textContent = formatRadiusUnit(state.radius);
 
   const themeContainer = document.getElementById('theme-selector');
   themeContainer.innerHTML = '';
@@ -321,11 +331,20 @@ function initSettings() {
   });
   document.getElementById('setting-radius').addEventListener('input', e => {
     state.radius = parseInt(e.target.value);
-    document.getElementById('setting-radius-val').textContent = `${state.radius} NM`;
+    document.getElementById('setting-radius-val').textContent = formatRadiusUnit(state.radius);
     document.getElementById('radius-slider').value = state.radius;
-    document.getElementById('radius-value').textContent = `${state.radius} NM`;
-    document.getElementById('range-badge').textContent = `${state.radius} NM`;
+    document.getElementById('radius-value').textContent = formatRadiusUnit(state.radius);
+    document.getElementById('range-badge').textContent = formatRadiusUnit(state.radius);
     saveSettings();
+  });
+  document.getElementById('setting-range-unit').addEventListener('change', e => {
+    state.rangeUnit = e.target.value;
+    document.getElementById('setting-radius-val').textContent = formatRadiusUnit(state.radius);
+    document.getElementById('radius-value').textContent = formatRadiusUnit(state.radius);
+    document.getElementById('range-badge').textContent = formatRadiusUnit(state.radius);
+    document.getElementById('rsb-ground-dist').textContent = '';
+    if (state.selectedFlight && state.currentView === 'radar') updateRadarSidebar();
+    saveSettings(); renderFlightList();
   });
   document.getElementById('setting-refresh').addEventListener('change', e => {
     state.refreshRate = parseInt(e.target.value); saveSettings(); restartRefresh();
@@ -791,7 +810,7 @@ function renderFlightList() {
     row.appendChild(h('td', { text: f._categoryLabel || '---' }));
     row.appendChild(h('td', { class:'alt-cell', html: `<span class="alt-arrow alt-${altDir}">${arrowChar}</span> ${formatAltitude(f.alt_baro, state.units)}` }));
     row.appendChild(h('td', { class:'speed-cell', text: formatSpeed(f.gs, state.units) }));
-    row.appendChild(h('td', { class:'distance-cell', text: f._distance != null ? formatNM(f._distance) : '---' }));
+    row.appendChild(h('td', { class:'distance-cell', text: f._distance != null ? formatRange(f._distance) : '---' }));
     row.appendChild(h('td', { text: f.track != null ? `${Math.round(f.track)}\u00B0 ${bearingToCardinal(f.track)}` : '---' }));
 
     fragment.appendChild(row);
@@ -948,7 +967,7 @@ function showRadarSidebar(f) {
 
   drawSidebarCompass(f._bearing || 0, f._elevation || 0);
 
-  const groundDist = f._distance != null ? (f._distance >= 10 ? Math.round(f._distance) + ' km' : f._distance.toFixed(2) + ' km') : '---';
+  const groundDist = f._distance != null ? (state.rangeUnit === 'km' ? (f._distance >= 10 ? Math.round(f._distance) + ' km' : f._distance.toFixed(2) + ' km') : ((f._distance / NM_TO_KM) >= 10 ? Math.round(f._distance / NM_TO_KM) + ' NM' : (f._distance / NM_TO_KM).toFixed(2) + ' NM')) : '---';
   document.getElementById('rsb-ground-dist').textContent = `Ground distance: ${groundDist}`;
 
   const pred = predictFlyover(f);
@@ -1520,8 +1539,8 @@ function initNavigation() {
 
   document.getElementById('radius-slider').addEventListener('input', e => {
     state.radius = parseInt(e.target.value);
-    document.getElementById('radius-value').textContent = `${state.radius} NM`;
-    document.getElementById('range-badge').textContent = `${state.radius} NM`;
+    document.getElementById('radius-value').textContent = formatRadiusUnit(state.radius);
+    document.getElementById('range-badge').textContent = formatRadiusUnit(state.radius);
     if (state.radarCircle) state.radarCircle.setRadius(state.radius * NM_TO_KM * 1000);
     saveSettings();
   });
