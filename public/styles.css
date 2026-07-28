@@ -265,7 +265,7 @@ body {
 #radar-source { color:var(--fg3); }
 .radar-plane { transition:filter .3s; }
 .radar-plane-selected { animation:radar-pulse 1.5s ease-in-out infinite; }
-.map-icon { filter: drop-shadow(0px 0px 1.5px rgba(0, 0, 0, 0.85)); }
+.map-icon { filter: none; }
 @keyframes radar-pulse { 0%,100%{filter:drop-shadow(0 0 6px var(--danger));} 50%{filter:drop-shadow(0 0 14px var(--danger));} }
 
 /* ===== STATS VIEW ===== */
