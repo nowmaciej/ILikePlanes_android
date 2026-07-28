@@ -1295,18 +1295,26 @@ function drawDailyRecords() {
   const maxFlights = Math.max(...Object.values(state.sessionHourly).map(v => v), 0);
   records.push({ label: 'Max/hr', value: maxFlights });
 
-  const speeds = [];
-  state.sessionFlights.forEach(({ flight: f }) => { if (f.gs) speeds.push(f.gs); });
-  if (speeds.length) records.push({ label: 'Max speed', value: formatSpeed(Math.max(...speeds), state.units) });
+  let maxSpeedVal = 0, maxSpeedFlight = null;
+  state.sessionFlights.forEach(({ flight: f }) => { if (f.gs && f.gs > maxSpeedVal) { maxSpeedVal = f.gs; maxSpeedFlight = f; } });
+  if (maxSpeedVal) {
+    const airline = maxSpeedFlight ? getAirlineInfo(maxSpeedFlight).name : '';
+    const callsign = maxSpeedFlight ? getFlightCallsign(maxSpeedFlight) : '---';
+    records.push({ label: 'Max speed', value: formatSpeed(maxSpeedVal, state.units), detail: `${callsign} \u2022 ${airline}` });
+  }
 
-  const alts = [];
-  state.sessionFlights.forEach(({ flight: f }) => { if (f.alt_baro && f.alt_baro !== 'ground') alts.push(f.alt_baro); });
-  if (alts.length) records.push({ label: 'Max alt', value: formatAltitude(Math.max(...alts), state.units) });
+  let maxAltVal = 0, maxAltFlight = null;
+  state.sessionFlights.forEach(({ flight: f }) => { if (f.alt_baro && f.alt_baro !== 'ground' && f.alt_baro > maxAltVal) { maxAltVal = f.alt_baro; maxAltFlight = f; } });
+  if (maxAltVal) {
+    const airline = maxAltFlight ? getAirlineInfo(maxAltFlight).name : '';
+    const callsign = maxAltFlight ? getFlightCallsign(maxAltFlight) : '---';
+    records.push({ label: 'Max alt', value: formatAltitude(maxAltVal, state.units), detail: `${callsign} \u2022 ${airline}` });
+  }
 
   records.push({ label: 'Total tracked', value: state.sessionFlights.size });
 
   container.innerHTML = records.map(r =>
-    `<div class="record-item"><span style="color:var(--fg3)">${r.label}</span><span style="font-weight:600;font-family:var(--font-mono)">${r.value}</span></div>`
+    `<div class="record-item"><span style="color:var(--fg3)">${r.label}</span><span style="font-weight:600;font-family:var(--font-mono)">${r.value}</span>${r.detail ? `<span class="record-detail">${r.detail}</span>` : ''}</div>`
   ).join('');
 }
 
