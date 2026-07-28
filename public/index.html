@@ -127,6 +127,11 @@
       <div id="view-radar" class="view">
         <div id="radar-map"></div>
         <div id="radar-overlay">
+          <div id="radar-controls">
+            <label id="radar-label-radius" for="radar-radius-slider">Radius:</label>
+            <input type="range" id="radar-radius-slider" min="10" max="250" value="250" step="5">
+            <span id="radar-radius-value">250 NM</span>
+          </div>
           <div id="radar-info">
             <span id="radar-flight-count">0 aircraft</span>
             <span id="radar-source">---</span>
@@ -250,11 +255,6 @@
                 <option value="metric" data-i18n="settings.metric">Metric</option>
                 <option value="imperial" data-i18n="settings.imperial">Imperial</option>
               </select>
-            </div>
-            <div class="setting-row">
-              <label data-i18n="settings.radius">Tracking Radius</label>
-              <input type="range" id="setting-radius" min="10" max="250" value="250" step="5">
-              <span id="setting-radius-val">250 NM</span>
             </div>
             <div class="setting-row">
               <label data-i18n="settings.rangeUnit">Range Unit</label>

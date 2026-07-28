@@ -295,8 +295,6 @@ function initSettings() {
 
   document.getElementById('setting-language').value = state.lang;
   document.getElementById('setting-units').value = state.units;
-  document.getElementById('setting-radius').value = state.radius;
-  document.getElementById('setting-radius-val').textContent = formatRadiusUnit(state.radius);
   document.getElementById('setting-range-unit').value = state.rangeUnit;
   document.getElementById('setting-refresh').value = state.refreshRate;
   document.getElementById('setting-local').checked = state.localReceiver;
@@ -309,6 +307,8 @@ function initSettings() {
   document.getElementById('setting-night').checked = state.nightMode;
   document.getElementById('radius-slider').value = state.radius;
   document.getElementById('radius-value').textContent = formatRadiusUnit(state.radius);
+  document.getElementById('radar-radius-slider').value = state.radius;
+  document.getElementById('radar-radius-value').textContent = formatRadiusUnit(state.radius);
   document.getElementById('range-badge').textContent = formatRadiusUnit(state.radius);
 
   const themeContainer = document.getElementById('theme-selector');
@@ -329,18 +329,10 @@ function initSettings() {
   document.getElementById('setting-units').addEventListener('change', e => {
     state.units = e.target.value; saveSettings(); renderFlightList();
   });
-  document.getElementById('setting-radius').addEventListener('input', e => {
-    state.radius = parseInt(e.target.value);
-    document.getElementById('setting-radius-val').textContent = formatRadiusUnit(state.radius);
-    document.getElementById('radius-slider').value = state.radius;
-    document.getElementById('radius-value').textContent = formatRadiusUnit(state.radius);
-    document.getElementById('range-badge').textContent = formatRadiusUnit(state.radius);
-    saveSettings();
-  });
   document.getElementById('setting-range-unit').addEventListener('change', e => {
     state.rangeUnit = e.target.value;
-    document.getElementById('setting-radius-val').textContent = formatRadiusUnit(state.radius);
     document.getElementById('radius-value').textContent = formatRadiusUnit(state.radius);
+    document.getElementById('radar-radius-value').textContent = formatRadiusUnit(state.radius);
     document.getElementById('range-badge').textContent = formatRadiusUnit(state.radius);
     document.getElementById('rsb-ground-dist').textContent = '';
     if (state.selectedFlight && state.currentView === 'radar') updateRadarSidebar();
@@ -1539,6 +1531,18 @@ function initNavigation() {
 
   document.getElementById('radius-slider').addEventListener('input', e => {
     state.radius = parseInt(e.target.value);
+    document.getElementById('radius-value').textContent = formatRadiusUnit(state.radius);
+    document.getElementById('radar-radius-slider').value = state.radius;
+    document.getElementById('radar-radius-value').textContent = formatRadiusUnit(state.radius);
+    document.getElementById('range-badge').textContent = formatRadiusUnit(state.radius);
+    if (state.radarCircle) state.radarCircle.setRadius(state.radius * NM_TO_KM * 1000);
+    saveSettings();
+  });
+
+  document.getElementById('radar-radius-slider').addEventListener('input', e => {
+    state.radius = parseInt(e.target.value);
+    document.getElementById('radar-radius-value').textContent = formatRadiusUnit(state.radius);
+    document.getElementById('radius-slider').value = state.radius;
     document.getElementById('radius-value').textContent = formatRadiusUnit(state.radius);
     document.getElementById('range-badge').textContent = formatRadiusUnit(state.radius);
     if (state.radarCircle) state.radarCircle.setRadius(state.radius * NM_TO_KM * 1000);
