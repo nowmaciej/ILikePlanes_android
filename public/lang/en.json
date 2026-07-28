@@ -20,7 +20,6 @@
     "list": "List",
     "radar": "Radar",
     "stats": "Stats",
-    "screensaver": "Screensaver",
     "settings": "Settings"
   },
   "list": {
@@ -95,12 +94,6 @@
     "hours": "hours",
     "minutes": "min"
   },
-  "screensaver": {
-    "title": "Screensaver",
-    "tapToExit": "Tap to exit",
-    "clock": "Clock",
-    "weather": "Weather"
-  },
   "settings": {
     "title": "Settings",
     "general": "General",
@@ -120,7 +113,6 @@
     "localReceiverUrl": "Receiver URL",
     "fallbackToInternet": "Internet Fallback",
     "flightAwareKey": "FlightAware API Key",
-    "idleTimeout": "Screensaver Timeout",
     "seconds": "seconds",
     "minutes": "minutes",
     "colorTheme": "Color Theme",

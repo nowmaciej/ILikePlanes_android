@@ -27,7 +27,6 @@ const state = {
   units: 'metric',
   radius: 250,
   refreshRate: 8,
-  idleTimeout: 120,
   localReceiver: false,
   receiverUrl: '',
   faKey: '',
@@ -39,8 +38,6 @@ const state = {
   currentView: 'list',
   source: '---',
   refreshTimer: null,
-  idleTimer: null,
-  screensaverActive: false,
   sessionStart: new Date(),
   sessionFlights: new Map(),
   sessionHourly: {},
@@ -245,7 +242,6 @@ function loadSettings() {
   state.units = saved('units', 'metric');
   state.radius = parseInt(saved('radius', '250'));
   state.refreshRate = parseInt(saved('refresh', '8'));
-  state.idleTimeout = parseInt(saved('idle', '120'));
   state.localReceiver = saved('local', 'false') === 'true';
   state.receiverUrl = saved('receiver-url', '');
   state.faKey = saved('fa-key', '');
@@ -262,7 +258,6 @@ function saveSettings() {
   set('units', state.units);
   set('radius', state.radius);
   set('refresh', state.refreshRate);
-  set('idle', state.idleTimeout);
   set('local', state.localReceiver);
   set('receiver-url', state.receiverUrl);
   set('fa-key', state.faKey);
@@ -281,7 +276,6 @@ function initSettings() {
   document.getElementById('setting-radius').value = state.radius;
   document.getElementById('setting-radius-val').textContent = `${state.radius} NM`;
   document.getElementById('setting-refresh').value = state.refreshRate;
-  document.getElementById('setting-idle').value = state.idleTimeout;
   document.getElementById('setting-local').checked = state.localReceiver;
   document.getElementById('setting-receiver-url').value = state.receiverUrl;
   document.getElementById('setting-fa-key').value = state.faKey;
@@ -318,9 +312,6 @@ function initSettings() {
   });
   document.getElementById('setting-refresh').addEventListener('change', e => {
     state.refreshRate = parseInt(e.target.value); saveSettings(); restartRefresh();
-  });
-  document.getElementById('setting-idle').addEventListener('change', e => {
-    state.idleTimeout = parseInt(e.target.value); saveSettings(); resetIdleTimer();
   });
   document.getElementById('setting-night').addEventListener('change', e => {
     applyNightMode(e.target.checked); saveSettings();
@@ -1347,119 +1338,6 @@ function restartRefresh() {
   startRefresh();
 }
 
-function resetIdleTimer() {
-  clearTimeout(state.idleTimer);
-  if (state.idleTimeout > 0 && !state.screensaverActive) {
-    state.idleTimer = setTimeout(() => {
-      if (!state.screensaverActive) activateScreensaver();
-    }, state.idleTimeout * 1000);
-  }
-}
-
-function activateScreensaver() {
-  state.screensaverActive = true;
-  document.getElementById('screensaver-overlay').classList.remove('hidden');
-  startScreensaverAnimation();
-  updateScreensaverHUD();
-}
-
-function deactivateScreensaver() {
-  state.screensaverActive = false;
-  document.getElementById('screensaver-overlay').classList.add('hidden');
-  resetIdleTimer();
-}
-
-let ssAnimFrame;
-function startScreensaverAnimation() {
-  const canvas = document.getElementById('screensaver-canvas');
-  const ctx = canvas.getContext('2d');
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-
-  const particles = state.flights.map(f => ({
-    x: f.lat != null ? ((f.lon - (state.position?.lon || 0)) / state.radius * 0.4 + 0.5) * canvas.width : Math.random() * canvas.width,
-    y: f.lat != null ? ((state.position?.lat || 0) - f.lat) / state.radius * 0.4 * canvas.height + canvas.height / 2 : Math.random() * canvas.height,
-    vx: (Math.random() - 0.5) * 0.5,
-    vy: (Math.random() - 0.5) * 0.5,
-    size: 2,
-    callsign: getFlightCallsign(f),
-    alt: f.alt_baro
-  }));
-
-  if (state.position) {
-    const rangeR = Math.min(canvas.width, canvas.height) * 0.4;
-    particles.push({ x: canvas.width/2, y: canvas.height/2, size: 4, isCenter: true });
-  }
-
-  function animate() {
-    if (!state.screensaverActive) { cancelAnimationFrame(ssAnimFrame); return; }
-
-    ctx.fillStyle = 'rgba(0,0,0,0.15)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.strokeStyle = 'rgba(0,255,65,0.1)';
-    ctx.lineWidth = 1;
-    const rangeR = Math.min(canvas.width, canvas.height) * 0.4;
-    for (let r = rangeR / 4; r <= rangeR; r += rangeR / 4) {
-      ctx.beginPath();
-      ctx.arc(canvas.width/2, canvas.height/2, r, 0, Math.PI*2);
-      ctx.stroke();
-    }
-
-    for (let a = 0; a < Math.PI*2; a += Math.PI/6) {
-      ctx.beginPath();
-      ctx.moveTo(canvas.width/2, canvas.height/2);
-      ctx.lineTo(canvas.width/2 + rangeR*Math.cos(a), canvas.height/2 + rangeR*Math.sin(a));
-      ctx.stroke();
-    }
-
-    const time = Date.now() / 1000;
-    ctx.strokeStyle = `rgba(0,255,65,${0.3 + 0.2*Math.sin(time)})`;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(canvas.width/2, canvas.height/2, rangeR, -Math.PI/2, -Math.PI/2 + (time % 4) / 4 * Math.PI*2);
-    ctx.stroke();
-
-    particles.forEach(p => {
-      if (p.isCenter) {
-        ctx.fillStyle = 'rgba(0,255,65,0.8)';
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-        ctx.fill();
-        return;
-      }
-
-      p.x += p.vx;
-      p.y += p.vy;
-      if (p.x < 0) p.x = canvas.width;
-      if (p.x > canvas.width) p.x = 0;
-      if (p.y < 0) p.y = canvas.height;
-      if (p.y > canvas.height) p.y = 0;
-
-      ctx.fillStyle = 'rgba(0,255,65,0.7)';
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-      ctx.fill();
-
-      if (p.callsign) {
-        ctx.fillStyle = 'rgba(0,255,65,0.3)';
-        ctx.font = '9px monospace';
-        ctx.fillText(p.callsign, p.x + 6, p.y + 3);
-      }
-    });
-
-    ssAnimFrame = requestAnimationFrame(animate);
-  }
-  animate();
-}
-
-function updateScreensaverHUD() {
-  const now = new Date();
-  document.getElementById('ss-clock').textContent = now.toLocaleTimeString(state.lang === 'pl' ? 'pl-PL' : 'en-GB', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-  document.getElementById('ss-weather').textContent = state.metarData?.rawOb?.substring(0, 40) || '';
-  document.getElementById('ss-info').textContent = `${state.flights.length} aircraft in range | ${state.source}`;
-}
-
 function updateSortIndicators() {
   document.querySelectorAll('#flight-table th[data-sort]').forEach(th => {
     const arrow = th.querySelector('.sort-arrow');
@@ -1515,13 +1393,6 @@ function initNavigation() {
   tabs.forEach(tb => tb.addEventListener('click', () => switchTab(tb.dataset.tab)));
   switchTab('general');
 
-  document.getElementById('btn-screensaver').addEventListener('click', () => {
-    if (state.screensaverActive) deactivateScreensaver();
-    else activateScreensaver();
-  });
-
-  document.getElementById('screensaver-overlay').addEventListener('click', deactivateScreensaver);
-
   document.getElementById('btn-back-to-list').addEventListener('click', () => {
     document.getElementById('view-details').classList.remove('active');
     document.getElementById('view-list').classList.add('active');
@@ -1540,13 +1411,9 @@ function initNavigation() {
     saveSettings();
   });
 
-  const idleEvents = ['mousemove','mousedown','touchstart','keydown','scroll'];
-  idleEvents.forEach(evt => document.addEventListener(evt, resetIdleTimer, { passive: true }));
-
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      if (state.screensaverActive) deactivateScreensaver();
-      else if (!document.getElementById('radar-sidebar').classList.contains('hidden')) {
+      if (!document.getElementById('radar-sidebar').classList.contains('hidden')) {
         hideRadarSidebar();
       }
       else if (!document.getElementById('settings-overlay').classList.contains('hidden')) {
@@ -1608,11 +1475,9 @@ async function init() {
   initNavigation();
   updateClock();
   setInterval(updateClock, 1000);
-  setInterval(() => updateScreensaverHUD(), 1000);
   setInterval(updateLocationDisplay, 5000);
   initGeolocation();
   startRefresh();
-  resetIdleTimer();
 
   window.addEventListener('resize', debounce(() => {
     if (state.map) state.map.invalidateSize();

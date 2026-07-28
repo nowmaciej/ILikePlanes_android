@@ -30,7 +30,6 @@
       </div>
       <div class="top-right">
         <span id="clock"></span>
-        <button id="btn-screensaver" class="icon-btn" title="Screensaver">&#9673;</button>
         <button id="btn-settings" class="icon-btn" title="Settings">&#9881;</button>
       </div>
     </header>
@@ -221,16 +220,6 @@
       </button>
     </nav>
 
-    <div id="screensaver-overlay" class="hidden">
-      <canvas id="screensaver-canvas"></canvas>
-      <div id="screensaver-hud">
-        <div id="ss-clock"></div>
-        <div id="ss-weather"></div>
-        <div id="ss-info"></div>
-      </div>
-      <div id="ss-hint" data-i18n="screensaver.tapToExit">Tap to exit</div>
-    </div>
-
     <div id="settings-overlay" class="hidden">
       <div id="settings-panel">
         <div id="settings-header">
@@ -289,16 +278,6 @@
             <div class="setting-row">
               <label data-i18n="settings.colorTheme">Color Theme</label>
               <div id="theme-selector" class="theme-grid"></div>
-            </div>
-            <div class="setting-row">
-              <label data-i18n="settings.idleTimeout">Screensaver Timeout</label>
-              <select id="setting-idle">
-                <option value="0">Off</option>
-                <option value="60">1 min</option>
-                <option value="120" selected>2 min</option>
-                <option value="300">5 min</option>
-                <option value="600">10 min</option>
-              </select>
             </div>
           </section>
           <section class="settings-section" data-panel="location">
