@@ -310,6 +310,60 @@ function saveSettings() {
   set('manual-location', state.manualLocation ? JSON.stringify(state.manualLocation) : '');
 }
 
+function updateOpenSkyRouteDisabled() {
+  const hasCreds = state.openskyClientId.trim() !== '' && state.openskyClientSecret.trim() !== '';
+  const toggle = document.getElementById('setting-opensky-route');
+  toggle.disabled = !hasCreds;
+  if (!hasCreds && state.openskyRouteData) {
+    state.openskyRouteData = false;
+    toggle.checked = false;
+    saveSettings();
+  }
+  const info = document.getElementById('opensky-credits-info');
+  const getKey = document.getElementById('opensky-get-key');
+  if (hasCreds) {
+    info.classList.remove('hidden');
+    getKey.classList.add('hidden');
+    fetchOpenSkyCredits();
+  } else {
+    info.classList.add('hidden');
+    getKey.classList.remove('hidden');
+  }
+}
+
+async function fetchOpenSkyCredits() {
+  if (!state.openskyClientId.trim() || !state.openskyClientSecret.trim()) return;
+  try {
+    const url = `/api/opensky-credits?client_id=${encodeURIComponent(state.openskyClientId)}&client_secret=${encodeURIComponent(state.openskyClientSecret)}`;
+    const data = await fetchJSON(url);
+    if (data.error) return;
+    const rem = data.remaining != null ? parseInt(data.remaining) : null;
+    const remainingEl = document.getElementById('opensky-credits-remaining');
+    const barEl = document.getElementById('opensky-credits-bar-fill');
+    const tierEl = document.getElementById('opensky-credits-tier');
+    if (rem == null) { remainingEl.textContent = '---'; return; }
+    let limit = 400;
+    if (rem >= 10000) limit = 14400;
+    else if (rem >= 5000) limit = 8000;
+    else if (rem >= 3000) limit = 4000;
+    remainingEl.textContent = `${rem} / ${limit}`;
+    const pct = limit > 0 ? (rem / limit * 100) : 0;
+    barEl.style.width = pct + '%';
+    barEl.style.background = pct > 50 ? 'var(--success)' : pct > 20 ? 'var(--warning)' : 'var(--danger)';
+    let tier = 'Anonymous';
+    if (limit >= 14400) tier = 'Licensed';
+    else if (limit >= 8000) tier = 'Active Feeder';
+    else if (limit >= 4000) tier = 'Standard';
+    if (data.retryAfter) {
+      tierEl.textContent = `Rate limited \u2014 retry after ${data.retryAfter}s`;
+      tierEl.style.color = 'var(--danger)';
+    } else {
+      tierEl.textContent = `Tier: ${tier}`;
+      tierEl.style.color = 'var(--fg3)';
+    }
+  } catch (e) {}
+}
+
 function initSettings() {
   loadSettings();
   applyLanguage(state.lang);
@@ -328,6 +382,7 @@ function initSettings() {
   document.getElementById('setting-opensky-route').checked = state.openskyRouteData;
   document.getElementById('setting-hide-surface').checked = state.hideSurface;
   document.getElementById('setting-night').checked = state.nightMode;
+  updateOpenSkyRouteDisabled();
   document.getElementById('radius-slider').value = state.radius;
   document.getElementById('radius-value').textContent = formatRadiusUnit(state.radius);
   document.getElementById('radar-radius-slider').value = state.radius;
@@ -378,9 +433,11 @@ function initSettings() {
   });
   document.getElementById('setting-opensky-client-id').addEventListener('input', e => {
     state.openskyClientId = e.target.value; saveSettings();
+    updateOpenSkyRouteDisabled();
   });
   document.getElementById('setting-opensky-client-secret').addEventListener('input', e => {
     state.openskyClientSecret = e.target.value; saveSettings();
+    updateOpenSkyRouteDisabled();
   });
   document.getElementById('setting-opensky-route').addEventListener('change', e => {
     state.openskyRouteData = e.target.checked; saveSettings();
@@ -666,16 +723,16 @@ async function fetchRoute(callsign) {
   const key = (callsign || '').trim().toUpperCase();
   if (!key) return null;
   if (state.routeCache[key] !== undefined) {
-    console.log('[ROUTE] cache hit', key, state.routeCache[key]);
+    // console.log('[ROUTE] cache hit', key, state.routeCache[key]);
     return state.routeCache[key];
   }
   try {
     const data = await fetchJSON(`/api/route/${key}`);
-    console.log('[ROUTE] fetched', key, data);
+    // console.log('[ROUTE] fetched', key, data);
     state.routeCache[key] = data;
     return data;
   } catch (e) {
-    console.log('[ROUTE] fetch error', key, e);
+    // console.log('[ROUTE] fetch error', key, e);
     state.routeCache[key] = null;
     return null;
   }
@@ -791,7 +848,7 @@ function renderFlightList() {
     const logoDiv = h('div', { class: 'airline-logo-cell' });
     const img = h('img', { alt: airline.name, src: '' });
     img.onerror = function() { this.style.display='none'; logoDiv.appendChild(h('span', { class:'fallback-icon', text: (airline.icao || '?').substring(0,2) })); };
-    img.src = getAirlineLogo(f.flight, f.r);
+    // img.src = getAirlineLogo(f.flight, f.r);
     logoDiv.appendChild(img);
     logoTd.appendChild(logoDiv);
 
@@ -845,9 +902,9 @@ function selectFlight(f) {
   centerMapOnFlight(f);
 
   if (f.flight) {
-    console.log('[SELECT] fetching route for', f.flight);
+    // console.log('[SELECT] fetching route for', f.flight);
     fetchRoute(f.flight).then(route => {
-      console.log('[SELECT] route resolved', route);
+      // console.log('[SELECT] route resolved', route);
       if (state.selectedFlight?.hex === f.hex) {
         if (state.currentView === 'radar') {
           updateRadarSidebar();
@@ -919,7 +976,7 @@ function showSpotterPanel(f) {
   logoEl.innerHTML = '';
   const img = h('img', { alt: airline.name });
   img.onerror = function() { this.style.display='none'; logoEl.appendChild(h('span', { text: (airline.icao || '?').substring(0,2) })); };
-  img.src = getAirlineLogo(f.flight, f.r);
+  // img.src = getAirlineLogo(f.flight, f.r);
   logoEl.appendChild(img);
 
   drawSpotterCompass(f._bearing || 0, f._elevation || 0);
@@ -1182,10 +1239,10 @@ function updateDetailPanel(f) {
   document.getElementById('detail-icao').textContent = f.hex || '---';
   document.getElementById('detail-eta').textContent = '---';
 
-  const logoWrap = document.getElementById('detail-airline-logo');
-  logoWrap.src = getAirlineLogo(f.flight, f.r);
-  logoWrap.alt = getAirlineInfo(f).name || 'Airline logo';
-  logoWrap.onerror = function() { this.src = ''; };
+  // const logoWrap = document.getElementById('detail-airline-logo');
+  // logoWrap.src = getAirlineLogo(f.flight, f.r);
+  // logoWrap.alt = getAirlineInfo(f).name || 'Airline logo';
+  // logoWrap.onerror = function() { this.src = ''; };
 
   document.getElementById('detail-from-city').textContent = f.origin?.name || f.origin?.icao || '---';
   document.getElementById('detail-from-icao').textContent = f.origin?.icao || '';
@@ -1545,6 +1602,7 @@ function initNavigation() {
 
   document.getElementById('btn-settings').addEventListener('click', () => {
     document.getElementById('settings-overlay').classList.remove('hidden');
+    if (state.openskyClientId.trim() && state.openskyClientSecret.trim()) fetchOpenSkyCredits();
   });
 
   document.getElementById('btn-close-settings').addEventListener('click', () => {

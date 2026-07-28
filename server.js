@@ -355,6 +355,34 @@ app.get('/api/opensky-track/:hex', async (req, res) => {
   }
 });
 
+app.get('/api/opensky-credits', async (req, res) => {
+  const clientId = req.query.client_id || '';
+  const clientSecret = req.query.client_secret || '';
+  const token = await getOpenSkyToken(clientId, clientSecret);
+  if (!token) return res.json({ error: 'no_token' });
+  try {
+    const result = await new Promise((resolve, reject) => {
+      https.get('https://opensky-network.org/api/states/all?icao24=3c4b26&time=0', {
+        headers: { 'Authorization': `Bearer ${token}` },
+        timeout: 10000
+      }, (resp) => {
+        let body = '';
+        resp.on('data', c => body += c);
+        resp.on('end', () => {
+          const h = resp.headers;
+          resolve({
+            remaining: h['x-rate-limit-remaining'] || null,
+            retryAfter: h['x-rate-limit-retry-after-seconds'] || null
+          });
+        });
+      });
+    });
+    res.json(result);
+  } catch (err) {
+    res.json({ error: err.message });
+  }
+});
+
 app.get('/api/health', async (req, res) => {
   const health = [];
   for (const source of ADSB_SOURCES) {

@@ -374,20 +374,32 @@
               <label data-i18n="settings.flightAwareKey">FlightAware API Key</label>
               <input type="password" id="setting-fa-key" placeholder="Optional">
             </div>
-            <div class="setting-row">
-              <label data-i18n="settings.openskyClientId">OpenSky Client ID</label>
-              <input type="text" id="setting-opensky-client-id" placeholder="opensky-network.org">
-            </div>
-            <div class="setting-row">
-              <label data-i18n="settings.openskyClientSecret">OpenSky Client Secret</label>
-              <input type="password" id="setting-opensky-client-secret" placeholder="opensky-network.org">
-            </div>
-            <div class="setting-row">
-              <label data-i18n="settings.openskyRouteData">OpenSky Route Data</label>
-              <label class="switch">
-                <input type="checkbox" id="setting-opensky-route">
-                <span class="slider"></span>
-              </label>
+            <div class="settings-group">
+              <h4 class="settings-group-title">OpenSky Network</h4>
+              <a id="opensky-get-key" href="https://opensky-network.org" target="_blank" rel="noopener" class="opensky-get-key" data-i18n="settings.openskyGetKey">Zdobądź klucz</a>
+              <div class="setting-row">
+                <label data-i18n="settings.openskyClientId">Client ID</label>
+                <input type="text" id="setting-opensky-client-id" placeholder="your@email.com-api-client">
+              </div>
+              <div class="setting-row">
+                <label data-i18n="settings.openskyClientSecret">Client Secret</label>
+                <input type="password" id="setting-opensky-client-secret" placeholder="Client Secret">
+              </div>
+              <div class="setting-row">
+                <label data-i18n="settings.openskyRouteData">OpenSky Route Data</label>
+                <label class="switch">
+                  <input type="checkbox" id="setting-opensky-route">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div id="opensky-credits-info" class="settings-group-info hidden">
+                <div class="opensky-credits-row">
+                  <span class="opensky-credits-label" data-i18n="settings.apiCredits">API Credits</span>
+                  <span id="opensky-credits-remaining" class="opensky-credits-value">---</span>
+                  <div class="opensky-credits-bar"><div id="opensky-credits-bar-fill" class="opensky-credits-bar-fill"></div></div>
+                </div>
+                <div id="opensky-credits-tier" class="opensky-credits-tier"></div>
+              </div>
             </div>
           </section>
           </div>

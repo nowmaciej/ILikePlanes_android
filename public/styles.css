@@ -377,6 +377,7 @@ body {
 }
 .switch input:checked + .slider { background:var(--accent); }
 .switch input:checked + .slider::before { transform:translateX(20px); background:#fff; }
+.switch input:disabled + .slider { opacity:0.4; cursor:not-allowed; }
 
 .theme-grid { display:flex; gap:6px; flex-wrap:wrap; }
 .theme-swatch {
@@ -397,6 +398,39 @@ body {
 .toast.error { border-color:var(--danger); color:var(--danger); }
 .toast.success { border-color:var(--success); color:var(--success); }
 @keyframes toastIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+/* ===== SETTINGS GROUP ===== */
+.settings-group {
+  margin-top:8px; padding:10px 12px;
+  background:var(--bg3); border-radius:var(--radius-sm);
+  border:1px solid var(--border);
+}
+.settings-group-title {
+  font-size:12px; font-weight:700; color:var(--accent2);
+  text-transform:uppercase; letter-spacing:0.8px; margin:0 0 8px 0;
+}
+.opensky-get-key {
+  display:inline-block; font-size:11px; color:var(--accent);
+  text-decoration:underline; margin-bottom:8px; cursor:pointer;
+}
+.opensky-get-key:hover { color:var(--accent2); }
+.settings-group .setting-row { background:transparent; border-bottom:none; padding:4px 0; }
+.settings-group-info { margin-top:8px; }
+.opensky-credits-row {
+  display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:12px;
+}
+.opensky-credits-label { color:var(--fg3); min-width:55px; text-transform:uppercase; letter-spacing:0.5px; font-size:10px; }
+.opensky-credits-value { color:var(--fg); font-weight:600; font-family:var(--font-mono); min-width:60px; font-size:11px; }
+.opensky-credits-bar {
+  flex:1; height:6px; background:var(--bg); border-radius:3px; overflow:hidden;
+}
+.opensky-credits-bar-fill {
+  height:100%; border-radius:3px; transition:width .5s, background .3s;
+  background:var(--success);
+}
+.opensky-credits-tier {
+  font-size:11px; color:var(--fg3); margin-top:4px; font-style:italic;
+}
 
 /* ===== LOCATION SEARCH ===== */
 .location-search-wrap { position:relative; flex:1; max-width:250px; }
