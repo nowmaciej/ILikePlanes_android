@@ -587,7 +587,7 @@ function decodeCategory(cat) {
 }
 
 function getCategoryIcon(cat) {
-  if (!cat) return 'cat-no-info';
+  if (!cat) return 'cat-a2';
   const key = typeof cat === 'number' ? `A${cat}` : cat;
   return `cat-${key.toLowerCase()}`;
 }
