@@ -27,6 +27,7 @@ const state = {
   units: 'metric',
   radius: 250,
   refreshRate: 8,
+  hideSurface: false,
   localReceiver: false,
   receiverUrl: '',
   faKey: '',
@@ -242,6 +243,7 @@ function loadSettings() {
   state.units = saved('units', 'metric');
   state.radius = parseInt(saved('radius', '250'));
   state.refreshRate = parseInt(saved('refresh', '8'));
+  state.hideSurface = saved('hide-surface', 'false') === 'true';
   state.localReceiver = saved('local', 'false') === 'true';
   state.receiverUrl = saved('receiver-url', '');
   state.faKey = saved('fa-key', '');
@@ -258,6 +260,7 @@ function saveSettings() {
   set('units', state.units);
   set('radius', state.radius);
   set('refresh', state.refreshRate);
+  set('hide-surface', state.hideSurface);
   set('local', state.localReceiver);
   set('receiver-url', state.receiverUrl);
   set('fa-key', state.faKey);
@@ -279,6 +282,7 @@ function initSettings() {
   document.getElementById('setting-local').checked = state.localReceiver;
   document.getElementById('setting-receiver-url').value = state.receiverUrl;
   document.getElementById('setting-fa-key').value = state.faKey;
+  document.getElementById('setting-hide-surface').checked = state.hideSurface;
   document.getElementById('setting-night').checked = state.nightMode;
   document.getElementById('radius-slider').value = state.radius;
   document.getElementById('radius-value').textContent = `${state.radius} NM`;
@@ -324,6 +328,9 @@ function initSettings() {
   });
   document.getElementById('setting-fa-key').addEventListener('input', e => {
     state.faKey = e.target.value; saveSettings();
+  });
+  document.getElementById('setting-hide-surface').addEventListener('change', e => {
+    state.hideSurface = e.target.checked; saveSettings(); renderFlightList(); updateFlightCount();
   });
 
   const locMode = document.getElementById('setting-location-mode');
@@ -532,7 +539,7 @@ function processFlights() {
   if (state.selectedFlight && state.currentView === 'radar') updateRadarSidebar();
   updateFlightCount();
 
-  const displayed = state.flights.slice(0, MAX_DISPLAYED);
+  const displayed = getVisibleFlights();
   const callsigns = displayed.map(f => f.flight).filter(Boolean);
   fetchRoutesBatch(callsigns).then(() => {
     updateAirportMarkers();
@@ -541,6 +548,17 @@ function processFlights() {
       updateRadarSidebar();
     }
   });
+}
+
+const SURFACE_CATEGORIES = new Set(['A1', 'D1', 'S1', 'S2', 'S3']);
+function isSurfaceFlight(f) {
+  if (!f.category) return false;
+  const key = typeof f.category === 'number' ? `A${f.category}` : f.category;
+  return SURFACE_CATEGORIES.has(key);
+}
+function getVisibleFlights() {
+  const flights = state.hideSurface ? state.flights.filter(f => !isSurfaceFlight(f)) : state.flights;
+  return flights.slice(0, MAX_DISPLAYED);
 }
 
 function calcElevation(altFt, distKm) {
@@ -579,8 +597,8 @@ function updateSourceBadge() {
 }
 
 function updateFlightCount() {
-  const displayed = Math.min(state.flights.length, MAX_DISPLAYED);
-  document.getElementById('flight-count').textContent = `${displayed} / ${state.flights.length} ${t('list.trackCount')}`;
+  const visible = getVisibleFlights();
+  document.getElementById('flight-count').textContent = `${visible.length} / ${state.flights.length} ${t('list.trackCount')}`;
 }
 
 function getFlightCallsign(f) {
@@ -637,7 +655,7 @@ function updateAirportMarkers() {
   if (!state.map) return;
 
   const seen = new Set();
-  const displayed = state.flights.slice(0, MAX_DISPLAYED);
+  const displayed = getVisibleFlights();
 
   displayed.forEach(f => {
     const key = (f.flight || '').trim().toUpperCase();
@@ -698,7 +716,7 @@ function getAirlineInfo(f) {
 
 function renderFlightList() {
   const tbody = document.getElementById('flight-list-body');
-  const displayed = sortFlights(state.flights.slice(0, MAX_DISPLAYED));
+  const displayed = sortFlights(getVisibleFlights());
 
   if (displayed.length === 0) {
     tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--fg3)">${t('list.noFlights')}</td></tr>`;
@@ -1146,7 +1164,8 @@ function updateRadarMap() {
   }
 
   const currentHexes = new Set();
-  state.flights.forEach(f => {
+  const radarFlights = state.hideSurface ? state.flights.filter(f => !isSurfaceFlight(f)) : state.flights;
+  radarFlights.forEach(f => {
     if (f.lat == null || f.lon == null) return;
     currentHexes.add(f.hex);
 

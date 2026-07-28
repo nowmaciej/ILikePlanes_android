@@ -113,6 +113,7 @@
     "localReceiverUrl": "Receiver URL",
     "fallbackToInternet": "Internet Fallback",
     "flightAwareKey": "FlightAware API Key",
+    "hideSurface": "Hide Surface",
     "seconds": "seconds",
     "minutes": "minutes",
     "colorTheme": "Color Theme",

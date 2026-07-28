@@ -113,6 +113,7 @@
     "localReceiverUrl": "URL Odbiornika",
     "fallbackToInternet": "Fallback na Internet",
     "flightAwareKey": "Klucz API FlightAware",
+    "hideSurface": "Ukryj Nawierzchniowe",
     "seconds": "sekund",
     "minutes": "minut",
     "colorTheme": "Kolor Motywu",
