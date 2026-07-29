@@ -1,7 +1,7 @@
 # Dependencies
 node_modules/
 
-# Environment variables
+# Environment
 .env
 .env.local
 .env.*.local
@@ -12,7 +12,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Runtime data
+# Runtime
 pids/
 *.pid
 *.seed
@@ -28,12 +28,46 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+Desktop.ini
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*.sublime-*
 
-#Credentials
+# Credentials
 OpenSky.json
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/*.iml
+android/.idea/
+android/.settings/
+android/.project
+android/.classpath
+android/captures/
+android/.navigation/
+android/.externalNativeBuild/
+android/.cxx/
+android/*.apk
+android/*.aab
+android/*.hprof
+android/out/
+android/release/
+android/gen/
+android/bin/
+android/gen-external-apk/
+android/proguard/
+
+# Android Gradle wrapper (binary JAR only)
+android/gradle/wrapper/gradle-wrapper.jar
+
+# Keystore
+*.jks
+*.keystore
+*.keystore.pwd
