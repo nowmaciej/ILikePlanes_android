@@ -120,6 +120,12 @@ class MainActivity : AppCompatActivity() {
                         true
                     }
                 }
+
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    injectSavedLocation()
+                    if (currentLocation == null) showLocationLoading()
+                }
             }
 
             loadUrl("https://ilikeplains.local/assets/index.html")
@@ -141,6 +147,7 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        loadLastLocation()
         requestLocationPermission()
     }
 
@@ -176,6 +183,7 @@ class MainActivity : AppCompatActivity() {
                 .setTitle(R.string.location_permission_dialog_title)
                 .setMessage(R.string.location_permission_dialog_message)
                 .setPositiveButton(android.R.string.ok) { _, _ ->
+                    showLocationLoading()
                     locationPermissionRequest.launch(
                         arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
                     )
@@ -196,9 +204,12 @@ class MainActivity : AppCompatActivity() {
             ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return
         }
+        showLocationLoading()
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
             if (location != null) {
                 currentLocation = location
+                saveLastLocation()
+                hideLocationLoading()
                 injectLocationState()
             }
         }
@@ -215,6 +226,59 @@ class MainActivity : AppCompatActivity() {
                         window.state.locationMode = 'auto';
                         if (typeof window.fetchFlights === 'function') window.fetchFlights();
                     }
+                } catch(e) {}
+            })();
+        """.trimIndent(), null)
+    }
+
+    private fun injectSavedLocation() {
+        if (currentLocation != null) injectLocationState()
+    }
+
+    private fun saveLastLocation() {
+        val loc = currentLocation ?: return
+        getSharedPreferences("location", 0).edit()
+            .putFloat("lat", loc.latitude.toFloat())
+            .putFloat("lon", loc.longitude.toFloat())
+            .apply()
+    }
+
+    private fun loadLastLocation() {
+        val prefs = getSharedPreferences("location", 0)
+        val lat = prefs.getFloat("lat", 0f).toDouble()
+        val lon = prefs.getFloat("lon", 0f).toDouble()
+        if (lat != 0.0 || lon != 0.0) {
+            currentLocation = Location("").apply {
+                this.latitude = lat
+                this.longitude = lon
+            }
+        }
+    }
+
+    private fun showLocationLoading() {
+        webView.evaluateJavascript("""
+            (function() {
+                try {
+                    var el = document.getElementById('location-status');
+                    if (!el) {
+                        el = document.createElement('div');
+                        el.id = 'location-status';
+                        el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg2,rgba(13,17,23,0.9));color:var(--fg2,#aaa);padding:8px 18px;border-radius:20px;font-size:13px;z-index:9999;backdrop-filter:blur(8px);border:1px solid var(--border2,rgba(255,255,255,0.1));white-space:nowrap;pointer-events:none;';
+                        document.body.appendChild(el);
+                    }
+                    el.textContent = '\u{1F4CD} pobieranie aktualnej lokalizacji...';
+                    el.style.display = '';
+                } catch(e) {}
+            })();
+        """.trimIndent(), null)
+    }
+
+    private fun hideLocationLoading() {
+        webView.evaluateJavascript("""
+            (function() {
+                try {
+                    var el = document.getElementById('location-status');
+                    if (el) el.style.display = 'none';
                 } catch(e) {}
             })();
         """.trimIndent(), null)
