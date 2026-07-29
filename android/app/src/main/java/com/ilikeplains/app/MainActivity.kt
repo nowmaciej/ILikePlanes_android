@@ -132,6 +132,7 @@ class MainActivity : AppCompatActivity() {
                     super.onPageFinished(view, url)
                     injectSavedLocation()
                     if (currentLocation == null) showLocationLoading()
+                    webView.post { ViewCompat.requestApplyInsets(window.decorView) }
                 }
             }
 
@@ -148,6 +149,11 @@ class MainActivity : AppCompatActivity() {
             ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
                 val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
                 webView.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+                if (bars.top > 0) {
+                    webView.evaluateJavascript(
+                        "document.documentElement.style.setProperty('--safe-top','${bars.top}px')", null
+                    )
+                }
                 insets
             }
         }
@@ -291,6 +297,18 @@ class MainActivity : AppCompatActivity() {
             }
         }
         injectLocationState()
+
+        val insetTop = run {
+            val insets = WindowInsetsCompat.toWindowInsetsCompat(window.decorView.rootWindowInsets, window.decorView)
+            insets.getInsets(WindowInsetsCompat.Type.systemBars()).top
+        }
+        if (insetTop > 0) {
+            webView.evaluateJavascript("""
+                (function() {
+                    try { document.documentElement.style.setProperty('--safe-top', '${insetTop}px'); } catch(e) {}
+                })();
+            """.trimIndent(), null)
+        }
     }
 
     private fun saveLastLocation() {
