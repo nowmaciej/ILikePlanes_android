@@ -52,7 +52,6 @@ class MainActivity : AppCompatActivity() {
         webView = WebView(this).apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
-            settings.databaseEnabled = true
             settings.cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
             settings.allowFileAccess = true
             settings.allowContentAccess = true
@@ -107,6 +106,13 @@ class MainActivity : AppCompatActivity() {
 
         apiBridge = ApiBridge(webView)
         setContentView(webView)
+
+        val statusBarHeight = run {
+            val id = resources.getIdentifier("status_bar_height", "dimen", "android")
+            if (id > 0) resources.getDimensionPixelSize(id) else 0
+        }
+
+        webView.setPadding(0, statusBarHeight, 0, 0)
 
         ViewCompat.setOnApplyWindowInsetsListener(webView) { view, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
