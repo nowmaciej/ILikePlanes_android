@@ -1773,18 +1773,35 @@ function initNavigation() {
 
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      if (!document.getElementById('airport-sidebar').classList.contains('hidden')) {
-        hideAirportSidebar();
-      }
-      else if (!document.getElementById('radar-sidebar').classList.contains('hidden')) {
-        hideRadarSidebar();
-      }
-      else if (!document.getElementById('settings-overlay').classList.contains('hidden')) {
-        document.getElementById('settings-overlay').classList.add('hidden');
-        saveSettings();
-      }
+      handleBack();
     }
   });
+}
+
+function handleBack() {
+  if (!document.getElementById('airport-sidebar').classList.contains('hidden')) {
+    hideAirportSidebar();
+    return true;
+  }
+  if (!document.getElementById('radar-sidebar').classList.contains('hidden')) {
+    hideRadarSidebar();
+    return true;
+  }
+  if (!document.getElementById('settings-overlay').classList.contains('hidden')) {
+    document.getElementById('settings-overlay').classList.add('hidden');
+    saveSettings();
+    return true;
+  }
+  if (document.getElementById('view-details').classList.contains('active')) {
+    document.getElementById('view-details').classList.remove('active');
+    document.getElementById('view-list').classList.add('active');
+    state.currentView = 'list';
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === 'list'));
+    renderFlightList();
+    return true;
+  }
+  return false;
+}
 }
 
 function initGeolocation() {

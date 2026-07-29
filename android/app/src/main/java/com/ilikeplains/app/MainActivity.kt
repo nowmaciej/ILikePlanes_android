@@ -12,6 +12,7 @@ import android.location.Location
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -149,6 +150,51 @@ class MainActivity : AppCompatActivity() {
 
         loadLastLocation()
         requestLocationPermission()
+
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : androidx.activity.OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    handleBackPress()
+                }
+            }
+        )
+    }
+
+    private var backPressedTime = 0L
+    private fun handleBackPress() {
+        webView.evaluateJavascript("handleBack();") { result ->
+            val handled = result?.trim()?.trim('"') == "true"
+            if (!handled) {
+                val now = System.currentTimeMillis()
+                if (now - backPressedTime < 2000) {
+                    finish()
+                } else {
+                    backPressedTime = now
+                    showExitToast()
+                }
+            }
+        }
+    }
+
+    private fun showExitToast() {
+        webView.evaluateJavascript("""
+            (function() {
+                try {
+                    var el = document.getElementById('exit-toast');
+                    if (!el) {
+                        el = document.createElement('div');
+                        el.id = 'exit-toast';
+                        el.style.cssText = 'position:fixed;bottom:36px;left:50%;transform:translateX(-50%);background:var(--bg2,rgba(13,17,23,0.9));color:var(--fg2,#aaa);padding:10px 20px;border-radius:24px;font-size:14px;z-index:99999;backdrop-filter:blur(12px);border:1px solid var(--border2,rgba(255,255,255,0.12));white-space:nowrap;pointer-events:none;transition:opacity .3s;';
+                        document.body.appendChild(el);
+                    }
+                    el.textContent = '\u23F2 naci\u015Bnij jeszcze raz, aby zamkn\u0105\u0107';
+                    el.style.display = '';
+                    el.style.opacity = '1';
+                    setTimeout(function() { el.style.opacity = '0'; }, 1800);
+                } catch(e) {}
+            })();
+        """.trimIndent(), null)
     }
 
     override fun onResume() {
