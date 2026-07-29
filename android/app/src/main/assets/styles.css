@@ -432,6 +432,18 @@ body {
   font-size:11px; color:var(--fg3); margin-top:4px; font-style:italic;
 }
 
+/* ===== CREDITS ===== */
+.credits-list { display:flex; flex-direction:column; gap:6px; }
+.credit-item {
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  padding:8px 10px; background:var(--bg3); border-radius:var(--radius-sm);
+  border:1px solid var(--border); font-size:12px;
+}
+.credit-name { font-weight:600; color:var(--fg); min-width:130px; }
+.credit-desc { color:var(--fg3); flex:1; font-size:11px; }
+.credit-item a { color:var(--accent); text-decoration:none; font-size:11px; }
+.credit-item a:hover { text-decoration:underline; }
+
 /* ===== LOCATION SEARCH ===== */
 .location-search-wrap { position:relative; flex:1; max-width:250px; }
 #setting-city-search {

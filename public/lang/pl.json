@@ -144,7 +144,8 @@
     "currentLocation": "Bieżąca lokalizacja",
     "noResults": "Brak wyników",
     "searching": "Szukanie...",
-    "locationSet": "Lokalizacja ustawiona na"
+    "locationSet": "Lokalizacja ustawiona na",
+    "credits": "Kredyty"
   },
   "themes": {
     "default": "Domyślny",
@@ -208,5 +209,13 @@
     "showers": "przelotne opady",
     "thunderstorm": "burza",
     "freezing": "zamarzający"
+  },
+  "credits": {
+    "adsb": "Dane lotów ADSB na żywo",
+    "opensky": "Śledzenie lotów i dane tras",
+    "metar": "Dane pogodowe METAR",
+    "route": "Rejestracja statków i dane tras",
+    "osm": "Mapy i wyszukiwanie miast",
+    "leaflet": "Interaktywna biblioteka map"
   }
 }

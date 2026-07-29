@@ -144,7 +144,8 @@
     "currentLocation": "Current location",
     "noResults": "No results found",
     "searching": "Searching...",
-    "locationSet": "Location set to"
+    "locationSet": "Location set to",
+    "credits": "Credits"
   },
   "themes": {
     "default": "Default",
@@ -208,5 +209,13 @@
     "showers": "showers",
     "thunderstorm": "thunderstorm",
     "freezing": "freezing"
+  },
+  "credits": {
+    "adsb": "Live ADSB flight data",
+    "opensky": "Flight tracking & route data",
+    "metar": "METAR weather data",
+    "route": "Aircraft registration & route data",
+    "osm": "Map tiles & city search",
+    "leaflet": "Interactive map library"
   }
 }

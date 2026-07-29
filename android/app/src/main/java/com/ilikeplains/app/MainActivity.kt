@@ -74,6 +74,7 @@ class MainActivity : AppCompatActivity() {
         webView = WebView(this).apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
+            settings.geolocationEnabled = true
             settings.cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
             settings.allowFileAccess = true
             settings.allowContentAccess = true
@@ -278,7 +279,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun injectSavedLocation() {
-        if (currentLocation != null) injectLocationState()
+        if (currentLocation == null) {
+            currentLocation = Location("").apply {
+                latitude = 52.2297
+                longitude = 21.0122
+            }
+        }
+        injectLocationState()
     }
 
     private fun saveLastLocation() {

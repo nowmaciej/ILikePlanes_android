@@ -1802,7 +1802,6 @@ function handleBack() {
   }
   return false;
 }
-}
 
 function initGeolocation() {
   if (state.locationMode === 'manual' && state.manualLocation) {
