@@ -291,7 +291,9 @@ class ApiBridge(private val webView: WebView) {
         val json = if (data is org.json.JSONObject || data is org.json.JSONArray) {
             data.toString()
         } else if (data is Map<*, *>) {
-            org.json.JSONObject(data as Map<String, Any?>).toString()
+            @Suppress("UNCHECKED_CAST")
+            val map = data as Map<String, Any?>
+            org.json.JSONObject(map).toString()
         } else {
             data.toString()
         }
