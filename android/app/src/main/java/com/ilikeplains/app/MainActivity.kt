@@ -4,6 +4,10 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.location.Location
 import android.net.Uri
 import android.os.Build
@@ -28,8 +32,24 @@ class MainActivity : AppCompatActivity() {
     private lateinit var webView: WebView
     private lateinit var apiBridge: ApiBridge
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var sensorManager: SensorManager
     private var currentLocation: Location? = null
     private var locationPermissionRequested = false
+    private var deviceHeading = 0f
+    private val rotationMatrix = FloatArray(9)
+    private val orientationAngles = FloatArray(3)
+
+    private val sensorListener = object : SensorEventListener {
+        override fun onSensorChanged(event: SensorEvent) {
+            if (event.sensor.type == Sensor.TYPE_ROTATION_VECTOR) {
+                SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
+                SensorManager.getOrientation(rotationMatrix, orientationAngles)
+                deviceHeading = Math.toDegrees(orientationAngles[0].toDouble()).toFloat()
+                    .let { if (it < 0) it + 360f else it }
+            }
+        }
+        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+    }
 
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -48,6 +68,7 @@ class MainActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
 
         webView = WebView(this).apply {
             settings.javaScriptEnabled = true
@@ -121,6 +142,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         requestLocationPermission()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)?.let {
+            sensorManager.registerListener(sensorListener, it, SensorManager.SENSOR_DELAY_UI)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        sensorManager.unregisterListener(sensorListener)
     }
 
     private fun requestLocationPermission() {
@@ -201,5 +234,8 @@ class MainActivity : AppCompatActivity() {
 
         @android.webkit.JavascriptInterface
         fun isLocationAvailable(): Boolean = currentLocation != null
+
+        @android.webkit.JavascriptInterface
+        fun getDeviceHeading(): Float = deviceHeading
     }
 }

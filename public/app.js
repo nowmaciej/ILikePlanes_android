@@ -29,6 +29,7 @@ const state = {
   rangeUnit: 'nm',
   refreshRate: 8,
   hideSurface: false,
+  deviceHeading: 0,
   localReceiver: false,
   receiverUrl: '',
   faKey: '',
@@ -229,6 +230,20 @@ function updateClock() {
 function updateCompass(heading) {
   const needle = document.getElementById('compass-needle');
   if (needle && heading != null) needle.style.transform = `translate(-50%,-100%) rotate(${heading}deg)`;
+}
+
+let deviceCompassTimer = null;
+function startDeviceCompass() {
+  if (deviceCompassTimer) return;
+  deviceCompassTimer = setInterval(() => {
+    if (typeof AndroidLocation !== 'undefined') {
+      const heading = AndroidLocation.getDeviceHeading();
+      if (heading >= 0 && heading !== state.deviceHeading) {
+        state.deviceHeading = heading;
+        updateCompass(state.deviceHeading);
+      }
+    }
+  }, 500);
 }
 
 function applyTheme(theme) {
@@ -879,7 +894,7 @@ function selectFlight(f) {
   hideAirportSidebar();
   renderFlightList();
   showSpotterPanel(f);
-  updateCompass(f.track);
+  updateCompass(state.deviceHeading);
   if (state.currentView === 'radar') {
     showRadarSidebar(f);
     highlightRadarMarker(prevHex, f.hex);
@@ -1825,6 +1840,7 @@ async function init() {
   setInterval(updateClock, 1000);
   setInterval(updateLocationDisplay, 5000);
   initGeolocation();
+  startDeviceCompass();
   startRefresh();
 
   window.addEventListener('resize', debounce(() => {
