@@ -17,12 +17,12 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.EdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.webkit.WebViewAssetLoader
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        EdgeToEdge.enableEdgeToEdge(this)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
@@ -134,20 +134,20 @@ class MainActivity : AppCompatActivity() {
         }
 
         apiBridge = ApiBridge(webView)
-        setContentView(webView)
 
-        val statusBarHeight = run {
-            val id = resources.getIdentifier("status_bar_height", "dimen", "android")
-            if (id > 0) resources.getDimensionPixelSize(id) else 0
+        val root = FrameLayout(this).apply {
+            addView(webView, FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            ))
+            ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
+                val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                webView.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+                insets
+            }
         }
 
-        webView.setPadding(0, statusBarHeight, 0, 0)
-
-        ViewCompat.setOnApplyWindowInsetsListener(webView) { view, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
-            insets
-        }
+        setContentView(root)
 
         loadLastLocation()
         requestLocationPermission()

@@ -946,12 +946,14 @@ function centerMapOnFlight(f) {
     let offsetX = 0;
     let offsetY = 0;
 
-    const sidebar = document.getElementById('radar-sidebar');
-    if (sidebar && !sidebar.classList.contains('hidden')) {
-      const sbRect = sidebar.getBoundingClientRect();
-      const overlapX = Math.max(0, sbRect.left < mapRect.right ? Math.min(sbRect.right, mapRect.right) - Math.max(sbRect.left, mapRect.left) : 0);
-      if (overlapX > 0) offsetX = overlapX / 2;
-    }
+    ['radar-sidebar', 'airport-sidebar'].forEach(id => {
+      const sidebar = document.getElementById(id);
+      if (sidebar && !sidebar.classList.contains('hidden')) {
+        const sbRect = sidebar.getBoundingClientRect();
+        const overlapX = Math.max(0, Math.min(sbRect.right, mapRect.right) - Math.max(sbRect.left, mapRect.left));
+        if (overlapX > 0) offsetX = overlapX / 2;
+      }
+    });
 
     const size = state.map.getSize();
     const targetPx = [size.x / 2 - offsetX, size.y / 2 - offsetY];
