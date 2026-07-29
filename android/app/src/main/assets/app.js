@@ -1798,32 +1798,40 @@ function initNavigation() {
 }
 
 function handleBack() {
-  if (!document.getElementById('airport-sidebar').classList.contains('hidden')) {
-    hideAirportSidebar();
-    return true;
-  }
-  if (!document.getElementById('radar-sidebar').classList.contains('hidden')) {
-    hideRadarSidebar();
-    return true;
-  }
-  if (!document.getElementById('settings-overlay').classList.contains('hidden')) {
-    document.getElementById('settings-overlay').classList.add('hidden');
-    saveSettings();
-    return true;
-  }
-  if (document.getElementById('view-details').classList.contains('active')) {
-    document.getElementById('view-details').classList.remove('active');
-    document.getElementById('details-backdrop').classList.remove('active');
-    if (window.matchMedia('(orientation:portrait)').matches) {
-      state.currentView = 'list';
-    } else {
-      document.getElementById('view-list').classList.add('active');
-      state.currentView = 'list';
-      document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === 'list'));
-      renderFlightList();
+  try {
+    if (!document.getElementById('airport-sidebar').classList.contains('hidden')) {
+      hideAirportSidebar();
+      return true;
     }
-    return true;
-  }
+  } catch(_) {}
+  try {
+    if (!document.getElementById('radar-sidebar').classList.contains('hidden')) {
+      hideRadarSidebar();
+      return true;
+    }
+  } catch(_) {}
+  try {
+    if (!document.getElementById('settings-overlay').classList.contains('hidden')) {
+      document.getElementById('settings-overlay').classList.add('hidden');
+      saveSettings();
+      return true;
+    }
+  } catch(_) {}
+  try {
+    if (document.getElementById('view-details').classList.contains('active')) {
+      document.getElementById('view-details').classList.remove('active');
+      document.getElementById('details-backdrop').classList.remove('active');
+      if (window.matchMedia('(orientation:portrait)').matches) {
+        state.currentView = 'list';
+      } else {
+        document.getElementById('view-list').classList.add('active');
+        state.currentView = 'list';
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === 'list'));
+        renderFlightList();
+      }
+      return true;
+    }
+  } catch(_) {}
   return false;
 }
 
@@ -1895,5 +1903,9 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+
+window.handleBack = handleBack;
+window.state = state;
+window.fetchFlights = fetchFlights;
 
 })();
