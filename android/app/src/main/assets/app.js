@@ -1224,9 +1224,9 @@ function showDetailPanel(f) {
     document.getElementById('view-list').classList.remove('active');
     document.getElementById('view-radar').classList.remove('active');
     document.getElementById('view-stats').classList.remove('active');
+    document.getElementById('details-backdrop').classList.add('active');
   }
   document.getElementById('view-details').classList.add('active');
-  document.getElementById('details-backdrop').classList.add('active');
   state.currentView = 'details';
   updateDetailPanel(f);
 }
@@ -1677,7 +1677,9 @@ function switchView(view) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
   state.currentView = view;
   document.getElementById('view-details').classList.remove('active');
-  document.getElementById('details-backdrop').classList.remove('active');
+  if (!window.matchMedia('(orientation:portrait)').matches) {
+    document.getElementById('details-backdrop').classList.remove('active');
+  }
 
   if (view === 'radar') { updateRadarMap(); setTimeout(() => { state.map?.invalidateSize(); if (state.selectedFlight) centerMapOnFlight(state.selectedFlight); }, 100); }
   if (view === 'stats') { drawHourlyChart(); }
@@ -1751,10 +1753,10 @@ function initNavigation() {
 
   document.getElementById('btn-back-to-list').addEventListener('click', () => {
     document.getElementById('view-details').classList.remove('active');
-    document.getElementById('details-backdrop').classList.remove('active');
     if (window.matchMedia('(orientation:portrait)').matches) {
       state.currentView = 'list';
     } else {
+      document.getElementById('details-backdrop').classList.remove('active');
       document.getElementById('view-list').classList.add('active');
       state.currentView = 'list';
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === 'list'));
@@ -1820,10 +1822,10 @@ function handleBack() {
   try {
     if (document.getElementById('view-details').classList.contains('active')) {
       document.getElementById('view-details').classList.remove('active');
-      document.getElementById('details-backdrop').classList.remove('active');
       if (window.matchMedia('(orientation:portrait)').matches) {
         state.currentView = 'list';
       } else {
+        document.getElementById('details-backdrop').classList.remove('active');
         document.getElementById('view-list').classList.add('active');
         state.currentView = 'list';
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === 'list'));
