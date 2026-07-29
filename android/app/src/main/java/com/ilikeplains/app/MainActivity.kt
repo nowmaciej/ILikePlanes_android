@@ -13,6 +13,7 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.webkit.WebViewAssetLoader
@@ -25,6 +26,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var apiBridge: ApiBridge
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var currentLocation: Location? = null
+    private var locationPermissionRequested = false
 
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -100,23 +102,40 @@ class MainActivity : AppCompatActivity() {
 
         apiBridge = ApiBridge(webView)
         setContentView(webView)
-        checkPermissions()
+        requestLocationPermission()
     }
 
-    private fun checkPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-            val coarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-
-            if (fine != PackageManager.PERMISSION_GRANTED && coarse != PackageManager.PERMISSION_GRANTED) {
-                locationPermissionRequest.launch(
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
-                )
-            } else {
-                getLastLocation()
-            }
-        } else {
+    private fun requestLocationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             getLastLocation()
+            return
+        }
+
+        val fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+        val coarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+
+        if (fine == PackageManager.PERMISSION_GRANTED || coarse == PackageManager.PERMISSION_GRANTED) {
+            getLastLocation()
+            return
+        }
+
+        if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) ||
+            shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)) {
+            AlertDialog.Builder(this)
+                .setTitle(R.string.location_permission_dialog_title)
+                .setMessage(R.string.location_permission_dialog_message)
+                .setPositiveButton(android.R.string.ok) { _, _ ->
+                    locationPermissionRequest.launch(
+                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+                    )
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        } else if (!locationPermissionRequested) {
+            locationPermissionRequested = true
+            locationPermissionRequest.launch(
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+            )
         }
     }
 
