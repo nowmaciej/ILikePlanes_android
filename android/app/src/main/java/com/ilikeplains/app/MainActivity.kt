@@ -2,8 +2,10 @@ package com.ilikeplains.app
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.webkit.WebResourceRequest
@@ -79,6 +81,17 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     return null
+                }
+
+                override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                    val url = request?.url?.toString() ?: return false
+                    return if (url.startsWith("https://ilikeplains.local/")) {
+                        false
+                    } else {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                        startActivity(intent)
+                        true
+                    }
                 }
             }
 
