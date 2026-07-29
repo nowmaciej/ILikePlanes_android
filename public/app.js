@@ -930,22 +930,18 @@ function highlightRadarMarker(prevHex, newHex) {
 function centerMapOnFlight(f) {
   if (!state.map || !f.lat || !f.lon) return;
   requestAnimationFrame(() => {
-    const sidebar = document.getElementById('radar-sidebar');
     const mapEl = state.map.getContainer();
     const mapRect = mapEl.getBoundingClientRect();
     let offsetX = 0;
     let offsetY = 0;
+
+    const sidebar = document.getElementById('radar-sidebar');
     if (sidebar && !sidebar.classList.contains('hidden')) {
       const sbRect = sidebar.getBoundingClientRect();
-      const sbCenterX = (sbRect.left + sbRect.right) / 2;
-      const mapCenterX = (mapRect.left + mapRect.right) / 2;
-      const sbCenterY = (sbRect.top + sbRect.bottom) / 2;
-      const mapCenterY = (mapRect.top + mapRect.bottom) / 2;
-      if (sbCenterX > mapCenterX) offsetX = sbRect.width / 2;
-      else if (sbCenterX < mapCenterX) offsetX = -sbRect.width / 2;
-      if (sbCenterY > mapCenterY) offsetY = sbRect.height / 2;
-      else if (sbCenterY < mapCenterY) offsetY = -sbRect.height / 2;
+      const overlapX = Math.max(0, sbRect.left < mapRect.right ? Math.min(sbRect.right, mapRect.right) - Math.max(sbRect.left, mapRect.left) : 0);
+      if (overlapX > 0) offsetX = overlapX / 2;
     }
+
     const size = state.map.getSize();
     const targetPx = [size.x / 2 - offsetX, size.y / 2 - offsetY];
     const planePx = state.map.latLngToContainerPoint([f.lat, f.lon]);
