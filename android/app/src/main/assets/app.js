@@ -446,6 +446,7 @@ function initSettings() {
   });
   document.getElementById('setting-hide-surface').addEventListener('change', e => {
     state.hideSurface = e.target.checked; saveSettings(); renderFlightList(); updateFlightCount();
+    if (state.currentView === 'radar') updateRadarMap();
   });
 
   const locMode = document.getElementById('setting-location-mode');

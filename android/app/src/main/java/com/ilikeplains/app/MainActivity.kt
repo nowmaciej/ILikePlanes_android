@@ -74,7 +74,7 @@ class MainActivity : AppCompatActivity() {
         webView = WebView(this).apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
-            settings.geolocationEnabled = true
+            settings.setGeolocationEnabled(true)
             settings.cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
             settings.allowFileAccess = true
             settings.allowContentAccess = true
