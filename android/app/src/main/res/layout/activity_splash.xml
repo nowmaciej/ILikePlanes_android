@@ -16,7 +16,7 @@
             android:layout_width="96dp"
             android:layout_height="96dp"
             android:src="@drawable/ic_launcher_fg"
-            android:contentDescription="I Like Plains" />
+            android:contentDescription="I Like Planes" />
 
         <TextView
             android:layout_width="wrap_content"

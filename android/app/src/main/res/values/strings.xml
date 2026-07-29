@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">I Like Plains</string>
+    <string name="app_name">I Like Planes</string>
     <string name="location_permission_dialog_title">Find aircraft near you</string>
     <string name="location_permission_dialog_message">Allow location access so the app can show flights in your area. Your location is used only on your device and is never stored or shared.</string>
 </resources>

@@ -1,10 +1,10 @@
-# Privacy Policy for I Like Plains
+# Privacy Policy for I Like Planes
 
 Last updated: July 2026
 
 ## Data Collection
 
-I Like Plains does **not** collect, store, or transmit any personal data to external servers.
+I Like Planes does **not** collect, store, or transmit any personal data to external servers.
 
 ### Location Data
 - The app requests access to your device's location to show aircraft flying in your vicinity.

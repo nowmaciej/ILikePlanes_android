@@ -145,5 +145,5 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`I Like Plains running at http://localhost:${PORT}`);
+  console.log(`I Like Planes running at http://localhost:${PORT}`);
 });

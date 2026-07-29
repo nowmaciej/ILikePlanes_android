@@ -513,7 +513,7 @@ async function searchCity(query) {
   try {
     const encoded = encodeURIComponent(query);
     const url = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=8&addressdetails=1&accept-language=${state.lang}`;
-    const res = await fetch(url, { headers: { 'User-Agent': 'I Like Plains/1.0' } });
+    const res = await fetch(url, { headers: { 'User-Agent': 'I Like Planes/1.0' } });
     const data = await res.json();
 
     if (!data.length) {
@@ -1219,8 +1219,8 @@ function predictFlyover(f) {
 }
 
 function showDetailPanel(f) {
-  const isPhone = window.innerWidth <= 600;
-  if (!isPhone) {
+  const isPortrait = window.matchMedia('(orientation:portrait)').matches;
+  if (!isPortrait) {
     document.getElementById('view-list').classList.remove('active');
     document.getElementById('view-radar').classList.remove('active');
     document.getElementById('view-stats').classList.remove('active');
@@ -1752,7 +1752,7 @@ function initNavigation() {
   document.getElementById('btn-back-to-list').addEventListener('click', () => {
     document.getElementById('view-details').classList.remove('active');
     document.getElementById('details-backdrop').classList.remove('active');
-    if (window.innerWidth <= 600) {
+    if (window.matchMedia('(orientation:portrait)').matches) {
       state.currentView = 'list';
     } else {
       document.getElementById('view-list').classList.add('active');
@@ -1814,7 +1814,7 @@ function handleBack() {
   if (document.getElementById('view-details').classList.contains('active')) {
     document.getElementById('view-details').classList.remove('active');
     document.getElementById('details-backdrop').classList.remove('active');
-    if (window.innerWidth <= 600) {
+    if (window.matchMedia('(orientation:portrait)').matches) {
       state.currentView = 'list';
     } else {
       document.getElementById('view-list').classList.add('active');

@@ -13,7 +13,7 @@ object HttpService {
         val conn = URL(url).openConnection() as HttpURLConnection
         conn.connectTimeout = timeoutMs
         conn.readTimeout = timeoutMs
-        conn.setRequestProperty("User-Agent", "I Like Plains/1.0")
+        conn.setRequestProperty("User-Agent", "I Like Planes/1.0")
         try {
             conn.connect()
             val status = conn.responseCode
