@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>FlightRadar Local</title>
+  <title>I Like Plains</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -13,7 +13,7 @@
   <div id="app">
     <header id="top-bar">
       <div class="top-left">
-        <span id="app-title">FlightRadar Local</span>
+        <span id="app-title">I Like Plains</span>
         <span id="source-badge" class="badge">---</span>
         <span id="range-badge" class="badge">250 NM</span>
       </div>
@@ -195,6 +195,11 @@
               <div class="rsb-item"><label>Latitude</label><span id="asb-lat"></span></div>
               <div class="rsb-item"><label>Longitude</label><span id="asb-lon"></span></div>
             </div>
+            <div class="asb-metar-group hidden">
+              <h4 class="asb-metar-title"><span data-i18n="weather.metar">METAR</span> <span id="asb-metar-icao"></span></h4>
+              <pre id="asb-metar-raw" class="asb-metar-raw">---</pre>
+              <div id="asb-metar-desc" class="asb-metar-desc"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -232,10 +237,6 @@
             <div class="stat-card">
               <h3 data-i18n="stats.dailyRecords">Daily Records</h3>
               <div id="daily-records"></div>
-            </div>
-            <div class="stat-card wide">
-              <h3 data-i18n="stats.metar">METAR Data</h3>
-              <pre id="metar-display">---</pre>
             </div>
           </div>
           <div id="stats-session-info">

@@ -57,7 +57,6 @@ const state = {
   myLocationMarker: null,
   layerAirports: null,
   layerPlanes: null,
-  metarData: null,
   translations: { en: {}, pl: {} },
   routeCache: {},
   sortKey: 'distance',
@@ -68,7 +67,7 @@ let t = (key) => {
   const parts = key.split('.');
   let v = state.translations[state.lang];
   for (const p of parts) { v = v?.[p]; }
-  return v || key;
+  return v || '';
 };
 
 function createPlaneIcon(f, selected) {
@@ -201,10 +200,6 @@ function getAirlineName(ownOp, flight) {
     'CSA':'Czech Airlines','LOT':'LOT Polish Airlines','WZZ':'Wizz Air'
   };
   return airlines[icao] || icao || '---';
-}
-
-function metarUrl(icao) {
-  return `https://aviationweather.gov/api/data/metar?id=${icao}&format=json`;
 }
 
 function debounce(fn, ms) {
@@ -502,7 +497,7 @@ async function searchCity(query) {
   try {
     const encoded = encodeURIComponent(query);
     const url = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=8&addressdetails=1&accept-language=${state.lang}`;
-    const res = await fetch(url, { headers: { 'User-Agent': 'FlightRadarLocal/1.0' } });
+    const res = await fetch(url, { headers: { 'User-Agent': 'I Like Plains/1.0' } });
     const data = await res.json();
 
     if (!data.length) {
@@ -1098,6 +1093,7 @@ function showAirportSidebar(a) {
   });
   document.getElementById('asb-flights').textContent = flightsHere.length;
   sb.classList.remove('hidden');
+  fetchAirportMETAR(a.lat, a.lon, a.icao);
 }
 
 function hideAirportSidebar() {
@@ -1517,22 +1513,137 @@ function updateSessionInfo() {
     : `${durMin} ${t('stats.minutes')}`;
 }
 
-async function fetchMETAR() {
-  if (!state.position) return;
+async function fetchAirportMETAR(lat, lon, icao) {
+  const group = document.querySelector('.asb-metar-group');
+  const rawEl = document.getElementById('asb-metar-raw');
+  const descEl = document.getElementById('asb-metar-desc');
+  const icaoEl = document.getElementById('asb-metar-icao');
+  if (!lat || !lon) {
+    group.classList.add('hidden');
+    return;
+  }
+  icaoEl.textContent = icao || '';
   try {
-    const data = await fetchJSON(`/api/metar?lat=${state.position.lat}&lon=${state.position.lon}`);
+    const data = await fetchJSON(`/api/metar?lat=${lat}&lon=${lon}`);
     const list = Array.isArray(data) ? data : (data.data || data.metar || []);
-    if (list.length > 0) {
-      const metar = list[0];
-      state.metarData = metar;
-      document.getElementById('metar-display').textContent = metar.rawOb || metar.raw_text || metar.raw_METAR || JSON.stringify(metar).substring(0, 200);
+    const metar = list.find(m => (m.icao || '').toUpperCase() === (icao || '').toUpperCase()) || list[0];
+    if (metar) {
+      const raw = metar.rawOb || metar.raw_text || metar.raw_METAR || '';
+      rawEl.textContent = raw;
+      descEl.innerHTML = parseMETARDescription(raw);
+      group.classList.remove('hidden');
     } else {
-      document.getElementById('metar-display').textContent = t('weather.notAvailable');
+      rawEl.textContent = '---';
+      descEl.innerHTML = `<span class="asb-metar-none">${t('weather.notAvailable')}</span>`;
+      group.classList.remove('hidden');
     }
   } catch(e) {
-    console.warn('METAR fetch error:', e.message);
-    document.getElementById('metar-display').textContent = t('weather.notAvailable');
+    console.warn('Airport METAR error:', e.message);
+    rawEl.textContent = '---';
+    descEl.innerHTML = `<span class="asb-metar-none">${t('weather.notAvailable')}</span>`;
+    group.classList.remove('hidden');
   }
+}
+
+function parseMETARDescription(raw) {
+  if (!raw) return `<span class="asb-metar-none">${t('weather.notAvailable')}</span>`;
+  const lines = [];
+  const parts = raw.replace(/^METAR\s+/i, '').split(/\s+/);
+
+  for (let i = 0; i < parts.length; i++) {
+    const p = parts[i];
+    if (/^\d{5}Z$/.test(p)) continue;
+    if (i < 3 && /^[A-Z]{4}$/.test(p)) continue;
+    if (p === 'NIL' || p === 'AUTO' || p === 'COR' || p === 'NSC' || p === 'RMK') continue;
+    if (p.startsWith('RMK')) break;
+
+    if (/^(VRB|\d{3})(\d{2})(G\d{2})?(KT|MPS|KMH)$/.test(p)) {
+      const m = p.match(/^(VRB|\d{3})(\d{2})(G\d{2})?(KT|MPS|KMH)$/);
+      const dir = m[1] === 'VRB' ? t('metar.variable') : `${m[1]}\u00B0`;
+      const spd = parseInt(m[2]);
+      const gust = m[3] ? parseInt(m[3].slice(1)) : null;
+      const unit = m[4] === 'KT' ? 'kt' : (m[4] === 'MPS' ? 'm/s' : 'km/h');
+      let wind = `${t('metar.wind')} ${t('metar.from')} ${dir} ${t('metar.at')} ${spd} ${unit}`;
+      if (gust) wind += `, ${t('metar.gusts')} ${gust} ${unit}`;
+      lines.push(wind);
+      continue;
+    }
+
+    if (/^\d{4}$/.test(p) && parseInt(p) < 9999) {
+      const vis = parseInt(p);
+      lines.push(`${t('metar.visibility')}: ${vis} ${t('metar.meters')}`);
+      continue;
+    }
+    if (/^\d{4}(NDV)?$/.test(p) && parseInt(p) === 9999) {
+      lines.push(`${t('metar.visibility')}: \u226510 ${t('metar.km')}`);
+      continue;
+    }
+    if (p === 'CAVOK') { lines.push(t('metar.cavok')); continue; }
+
+    if (/^(-|\+|VC)?(MI|PR|BC|DR|BL|SH|TS|FZ|DZ|RA|SN|SG|IC|PL|GR|GS|BR|FG|FU|DU|SA|HZ|PO|SQ|FC|SS|DS)$/.test(p) ||
+        /^(-|\+|VC)?(MI|PR|BC|DR|BL)?(DZ|RA|SN|SG|IC|PL|GR|GS|BR|FG|FU|DU|SA|HZ|PO|SQ|FC|SS|DS)$/.test(p)) {
+      const w = parseWeather(p);
+      if (w) lines.push(w);
+      continue;
+    }
+
+    if (/^(FEW|SCT|BKN|OVC|VV)(\d{3})(CB|TCU)?$/.test(p)) {
+      const m = p.match(/^(FEW|SCT|BKN|OVC|VV)(\d{3})(CB|TCU)?$/);
+      const coverMap = { FEW: t('metar.few'), SCT: t('metar.scattered'), BKN: t('metar.broken'), OVC: t('metar.overcast'), VV: t('metar.verticalVisibility') };
+      let cover = coverMap[m[1]] || m[1];
+      const height = parseInt(m[2]) * 100;
+      let cloud = `${cover} ${t('metar.at')} ${height} ${t('metar.feet')}`;
+      if (m[3] === 'CB') cloud += ` (${t('metar.cb')})`;
+      else if (m[3] === 'TCU') cloud += ` (${t('metar.tcu')})`;
+      lines.push(cloud);
+      continue;
+    }
+
+    if (/^(M?\d{2})\/(M?\d{2})?$/.test(p)) {
+      const m = p.match(/^(M?\d{2})\/(M?\d{2})?$/);
+      const parseT = (v) => v.startsWith('M') ? `-${v.slice(1)}` : v;
+      const temp = parseT(m[1]);
+      const dew = m[2] ? parseT(m[2]) : null;
+      let tLine = `${t('metar.temperature')}: ${temp}\u00B0C`;
+      if (dew) tLine += `, ${t('metar.dewPoint')}: ${dew}\u00B0C`;
+      lines.push(tLine);
+      continue;
+    }
+
+    if (/^Q(\d{4})$/.test(p)) {
+      const m = p.match(/^Q(\d{4})$/);
+      lines.push(`${t('metar.pressure')}: ${m[1]} ${t('metar.hpa')}`);
+      continue;
+    }
+    if (/^A(\d{4})$/.test(p)) {
+      const m = p.match(/^A(\d{4})$/);
+      lines.push(`${t('metar.pressure')}: ${m[1]} inHg`);
+      continue;
+    }
+  }
+
+  if (lines.length === 0) return `<span class="asb-metar-none">${t('weather.notAvailable')}</span>`;
+  return lines.map(l => `<div class="asb-metar-line">${l}</div>`).join('');
+}
+
+function parseWeather(code) {
+  const prefixMap = { '-': t('metar.light'), '+': t('metar.heavy'), VC: t('metar.vicinity') };
+  const weatherMap = {
+    DZ: t('metar.drizzle'), RA: t('metar.rain'), SN: t('metar.snow'), SG: t('metar.snowGrains'),
+    IC: t('metar.iceCrystals'), PL: t('metar.icePellets'), GR: t('metar.hail'), GS: t('metar.smallHail'),
+    BR: t('metar.mist'), FG: t('metar.fog'), FU: t('metar.smoke'), DU: t('metar.dust'),
+    SA: t('metar.sand'), HZ: t('metar.haze'), PO: t('metar.dustWhirls'), SQ: t('metar.squall'),
+    FC: t('metar.funnelCloud'), SS: t('metar.sandstorm'), DS: t('metar.duststorm'),
+    SH: t('metar.showers'), TS: t('metar.thunderstorm'), FZ: t('metar.freezing')
+  };
+  let prefix = '';
+  let w = code;
+  for (const [k, v] of Object.entries(prefixMap)) {
+    if (w.startsWith(k)) { prefix = v; w = w.slice(k.length); break; }
+  }
+  const desc = weatherMap[w] || weatherMap[w.slice(0, 2)] || null;
+  if (!desc) return null;
+  return prefix ? `${prefix} ${desc}` : desc;
 }
 
 function switchView(view) {
@@ -1545,7 +1656,7 @@ function switchView(view) {
   state.currentView = view;
 
   if (view === 'radar') { updateRadarMap(); setTimeout(() => { state.map?.invalidateSize(); if (state.selectedFlight) centerMapOnFlight(state.selectedFlight); }, 100); }
-  if (view === 'stats') { drawHourlyChart(); fetchMETAR(); }
+  if (view === 'stats') { drawHourlyChart(); }
   if (view === 'list') renderFlightList();
 }
 

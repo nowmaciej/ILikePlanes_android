@@ -528,6 +528,21 @@ body {
 }
 .airport-tower-marker { filter:drop-shadow(0 1px 3px rgba(0,0,0,0.4)); }
 
+/* ===== AIRPORT METAR ===== */
+.asb-metar-group {
+  margin-top:12px; padding:8px 10px; background:var(--bg3); border-radius:var(--radius-sm);
+  border:1px solid var(--border2);
+}
+.asb-metar-group.hidden { display:none; }
+.asb-metar-title { font-size:12px; font-weight:700; color:var(--accent); margin:0 0 6px; display:flex; align-items:center; gap:4px; }
+.asb-metar-raw {
+  font-family:var(--font-mono); font-size:11px; color:var(--fg2); white-space:pre-wrap; word-break:break-all;
+  background:var(--bg2); padding:6px 8px; border-radius:var(--radius-sm); margin-bottom:6px; max-height:60px; overflow:auto;
+}
+.asb-metar-desc { font-size:12px; color:var(--fg); line-height:1.6; }
+.asb-metar-line { padding:1px 0; }
+.asb-metar-none { color:var(--fg3); font-style:italic; }
+
 /* ===== UTILITY ===== */
 .hidden { display:none !important; }
 @media (max-width:600px) {
