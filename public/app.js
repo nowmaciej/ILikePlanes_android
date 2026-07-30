@@ -1035,23 +1035,6 @@ function centerMapOnFlight(f) {
     const targetPx = [size.x / 2 - offsetX, size.y / 2 - offsetY];
     const planePx = state.map.latLngToContainerPoint([f.lat, f.lon]);
     state.map.panBy([planePx.x - targetPx[0], planePx.y - targetPx[1]], { animate: true });
-
-    setTimeout(() => {
-      if (!state.debugLayer) state.debugLayer = L.layerGroup().addTo(state.map);
-      state.debugLayer.clearLayers();
-      const vsize = state.map.getSize();
-      const vw = vsize.x - (offsetX ? offsetX * 2 : 0);
-      const vh = vsize.y - (offsetY ? offsetY * 2 : 0);
-      const vb = L.latLngBounds(
-        state.map.containerPointToLatLng([0, 0]),
-        state.map.containerPointToLatLng([vw, vh])
-      );
-      L.rectangle(vb, { color: '#ff0000', weight: 2, fill: false }).addTo(state.debugLayer);
-      const cx = vsize.x / 2 - offsetX;
-      const cy = vsize.y / 2 - offsetY;
-      const centerLL = state.map.containerPointToLatLng([cx, cy]);
-      L.circleMarker(centerLL, { radius: 6, color: '#ff0000', fillColor: '#ff0000', fillOpacity: 1 }).addTo(state.debugLayer);
-    }, 300);
   });
 }
 
