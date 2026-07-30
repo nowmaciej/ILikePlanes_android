@@ -432,8 +432,6 @@ function initSettings() {
   document.getElementById('radius-value').textContent = formatRadiusUnit(state.radius);
   document.getElementById('radar-radius-slider').value = state.radius;
   document.getElementById('radar-radius-value').textContent = formatRadiusUnit(state.radius);
-  document.getElementById('range-badge').textContent = formatRadiusUnit(state.radius);
-
   const themeContainer = document.getElementById('theme-selector');
   themeContainer.innerHTML = '';
   THEMES.forEach(theme => {
@@ -456,7 +454,6 @@ function initSettings() {
     state.rangeUnit = e.target.value;
     document.getElementById('radius-value').textContent = formatRadiusUnit(state.radius);
     document.getElementById('radar-radius-value').textContent = formatRadiusUnit(state.radius);
-    document.getElementById('range-badge').textContent = formatRadiusUnit(state.radius);
     document.getElementById('rsb-ground-dist').textContent = '';
     if (state.selectedFlight && state.currentView === 'radar') updateRadarSidebar();
     saveSettings(); renderFlightList();
@@ -1486,7 +1483,7 @@ function updateRadarMap() {
   });
 
   state.layerTrails.clearLayers();
-  if (state.selectedFlight) {
+  if (state.openskyRouteData && state.selectedFlight) {
     const hex = state.selectedFlight.hex;
     const trail = state.radarTrails[hex];
     if (trail && trail.length >= 2) {
@@ -1874,7 +1871,6 @@ function initNavigation() {
     document.getElementById('radius-value').textContent = formatRadiusUnit(state.radius);
     document.getElementById('radar-radius-slider').value = state.radius;
     document.getElementById('radar-radius-value').textContent = formatRadiusUnit(state.radius);
-    document.getElementById('range-badge').textContent = formatRadiusUnit(state.radius);
     if (state.radarCircle) state.radarCircle.setRadius(state.radius * NM_TO_KM * 1000);
     applyRadiusFilter();
     saveSettings();
@@ -1885,7 +1881,6 @@ function initNavigation() {
     document.getElementById('radar-radius-value').textContent = formatRadiusUnit(state.radius);
     document.getElementById('radius-slider').value = state.radius;
     document.getElementById('radius-value').textContent = formatRadiusUnit(state.radius);
-    document.getElementById('range-badge').textContent = formatRadiusUnit(state.radius);
     if (state.radarCircle) state.radarCircle.setRadius(state.radius * NM_TO_KM * 1000);
     applyRadiusFilter();
     saveSettings();
