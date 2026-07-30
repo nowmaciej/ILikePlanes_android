@@ -1,0 +1,31 @@
+Debug: wizualizacja widzialnego obszaru mapy w centerMapOnFlight
+===============================================================
+
+Co zmieniono w public/app.js (funkcja centerMapOnFlight, ok. linia 1015):
+
+1. Poprawiono logikę wykrywania nakładania sidebaru:
+   - Zamiast porównywania overlapX > overlapY, sprawdzamy pozycję sidebaru:
+     * sbRect.left > mapRect.left → sidebar z prawej strony (landscape) → offsetX
+     * sbRect.top > mapRect.top → sidebar na dole (portrait) → offsetY
+
+2. Dodano rysowanie ramki (czerwony prostokąt) wokół widzialnego obszaru mapy:
+   - Po wykonaniu panBy (z 300ms opóźnieniem) pobierany jest aktualny stan mapy
+   - getSize() + containerPointToLatLng() przeliczają piksele na koordynaty geograficzne
+   - Szerokość widzialna: vsize.x - (offsetX ? offsetX*2 : 0)
+   - Wysokość widzialna: vsize.y - (offsetY ? offsetY*2 : 0)
+   - L.rectangle() rysuje ramkę w kolorze #ff0000
+
+3. Dodano czerwony punkt (circleMarker) w środku widzialnego obszaru:
+   - cx = vsize.x/2 - offsetX, cy = vsize.y/2 - offsetY
+   - Przeliczane na lat/lng przez containerPointToLatLng
+
+4. state.debugLayer (L.layerGroup) przechowuje elementy debugowe
+   - Tworzona przy pierwszym użyciu, dodawana do state.map
+   - Czyszczona przed każdym rysowaniem
+
+Aby cofnąć zmiany:
+- Usuń linie od "setTimeout(..." do "}, 300);" (debug layer + rysowanie)
+- Przywróć oryginalną logikę overlayX/overlayY albo zachowaj nową (poprawioną)
+- (Opcjonalnie) usuń state.debugLayer z inicjalizacji stanu jeśli dodano
+
+Pliki modyfikowane: public/app.js, android/.../assets/app.js (skopiowany)
