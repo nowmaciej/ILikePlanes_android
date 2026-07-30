@@ -645,7 +645,6 @@ async function fetchFlights() {
     processFlights();
   } catch(err) {
     console.warn('Fetch failed, keeping last state:', err.message);
-    document.getElementById('source-badge').textContent = state.source + ' \u26A0';
   }
 }
 
@@ -777,9 +776,7 @@ function applyRadiusFilter() {
   updateFlightCount();
 }
 
-function updateSourceBadge() {
-  document.getElementById('source-badge').textContent = state.source;
-}
+function updateSourceBadge() {}
 
 function updateFlightCount() {
   const visible = getVisibleFlights();
@@ -1292,6 +1289,7 @@ function predictFlyover(f) {
 }
 
 function showDetailPanel(f) {
+  document.getElementById('settings-overlay').classList.add('hidden');
   state._prevView = state.currentView;
   const isPortrait = window.innerHeight > window.innerWidth;
   if (!isPortrait) {
@@ -1820,6 +1818,8 @@ function initNavigation() {
   updateSortIndicators();
 
   document.getElementById('btn-settings').addEventListener('click', () => {
+    document.getElementById('view-details').classList.remove('active');
+    document.getElementById('details-backdrop').classList.remove('active');
     document.getElementById('settings-overlay').classList.remove('hidden');
     if (state.openskyClientId.trim() && state.openskyClientSecret.trim()) displayCachedCredits();
   });
