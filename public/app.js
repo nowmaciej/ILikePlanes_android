@@ -329,8 +329,8 @@ function loadSettings() {
   state.theme = saved('theme', 'default');
   state.nightMode = saved('night', 'false') === 'true';
   state.units = saved('units', 'metric');
-  state.radius = parseInt(saved('radius', '250'));
-  state.rangeUnit = saved('range-unit', 'nm');
+  state.radius = parseInt(saved('radius', '16'));
+  state.rangeUnit = saved('range-unit', 'km');
   state.refreshRate = parseInt(saved('refresh', '8'));
   state.hideSurface = saved('hide-surface', 'false') === 'true';
   state.localReceiver = saved('local', 'false') === 'true';
