@@ -28,4 +28,4 @@ The app does not require user accounts, registration, or authentication.
 The app contains no analytics SDKs, crash reporting, or telemetry.
 
 ## Contact
-For questions, open an issue at: https://github.com/nowmaciej/ILikePlains_android
+TBD

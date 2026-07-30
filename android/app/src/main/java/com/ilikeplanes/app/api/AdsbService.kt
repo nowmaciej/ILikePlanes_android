@@ -1,6 +1,6 @@
-package com.ilikeplains.app.api
+﻿package com.ilikeplanes.app.api
 
-import com.ilikeplains.app.model.Flight
+import com.ilikeplanes.app.model.Flight
 
 object AdsbService {
 

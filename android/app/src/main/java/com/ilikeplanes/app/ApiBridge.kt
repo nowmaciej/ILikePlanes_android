@@ -1,8 +1,8 @@
-package com.ilikeplains.app
+﻿package com.ilikeplanes.app
 
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
-import com.ilikeplains.app.api.*
+import com.ilikeplanes.app.api.*
 import kotlinx.coroutines.*
 import java.io.ByteArrayInputStream
 
@@ -250,7 +250,7 @@ class ApiBridge(private val webView: WebView) {
         return map
     }
 
-    private fun flightToJson(f: com.ilikeplains.app.model.Flight): org.json.JSONObject {
+    private fun flightToJson(f: com.ilikeplanes.app.model.Flight): org.json.JSONObject {
         val obj = org.json.JSONObject()
         obj.put("hex", f.hex)
         obj.put("flight", f.flight)
@@ -275,7 +275,7 @@ class ApiBridge(private val webView: WebView) {
         return obj
     }
 
-    private fun airportToJson(a: com.ilikeplains.app.model.Airport?): Any {
+    private fun airportToJson(a: com.ilikeplanes.app.model.Airport?): Any {
         if (a == null) return org.json.JSONObject.NULL
         val obj = org.json.JSONObject()
         obj.put("icao", a.icao ?: org.json.JSONObject.NULL)

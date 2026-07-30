@@ -1,6 +1,6 @@
-package com.ilikeplains.app.api
+﻿package com.ilikeplanes.app.api
 
-import com.ilikeplains.app.model.Metar
+import com.ilikeplanes.app.model.Metar
 
 object MetarService {
 

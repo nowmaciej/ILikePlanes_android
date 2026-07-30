@@ -1,7 +1,7 @@
-package com.ilikeplains.app.api
+﻿package com.ilikeplanes.app.api
 
-import com.ilikeplains.app.model.OpenSkyTrack
-import com.ilikeplains.app.model.TrackPoint
+import com.ilikeplanes.app.model.OpenSkyTrack
+import com.ilikeplanes.app.model.TrackPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader

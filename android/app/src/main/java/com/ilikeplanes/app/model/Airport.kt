@@ -1,4 +1,4 @@
-package com.ilikeplains.app.model
+﻿package com.ilikeplanes.app.model
 
 data class Airport(
     val icao: String? = null,

@@ -1,4 +1,4 @@
-package com.ilikeplains.app
+﻿package com.ilikeplanes.app
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -95,7 +95,7 @@ class MainActivity : AppCompatActivity() {
             webViewClient = object : WebViewClient() {
                 private val assetLoader = WebViewAssetLoader.Builder()
                     .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this@MainActivity))
-                    .setDomain("ilikeplains.local")
+                    .setDomain("ilikeplanes.local")
                     .build()
 
                 override fun shouldInterceptRequest(
@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity() {
                         if (response != null) return response
                     }
 
-                    if (url.startsWith("https://ilikeplains.local/assets/")) {
+                    if (url.startsWith("https://ilikeplanes.local/assets/")) {
                         return assetLoader.shouldInterceptRequest(uri)
                     }
 
@@ -119,7 +119,7 @@ class MainActivity : AppCompatActivity() {
 
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val url = request?.url?.toString() ?: return false
-                    return if (url.startsWith("https://ilikeplains.local/")) {
+                    return if (url.startsWith("https://ilikeplanes.local/")) {
                         false
                     } else {
                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
@@ -136,7 +136,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            loadUrl("https://ilikeplains.local/assets/index.html")
+            loadUrl("https://ilikeplanes.local/assets/index.html")
         }
 
         apiBridge = ApiBridge(webView)
@@ -280,9 +280,8 @@ class MainActivity : AppCompatActivity() {
             (function() {
                 try {
                     if (window.state) {
-                        window.state.position = { lat: $lat, lon: $lon };
-                        window.state.locationMode = 'auto';
-                        if (typeof window.fetchFlights === 'function') window.fetchFlights();
+                    window.state.position = { lat: $lat, lon: $lon };
+                    if (typeof window.fetchFlights === 'function') window.fetchFlights();
                     }
                 } catch(e) {}
             })();
@@ -296,7 +295,9 @@ class MainActivity : AppCompatActivity() {
                 longitude = 21.0122
             }
         }
-        injectLocationState()
+        webView.evaluateJavascript("window.state && window.state.position != null") { hasPosition ->
+            if (hasPosition != "true") injectLocationState()
+        }
 
         val insetTop = run {
             val insets = WindowInsetsCompat.toWindowInsetsCompat(window.decorView.rootWindowInsets, window.decorView)
@@ -332,32 +333,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showLocationLoading() {
-        webView.evaluateJavascript("""
-            (function() {
-                try {
-                    var el = document.getElementById('location-status');
-                    if (!el) {
-                        el = document.createElement('div');
-                        el.id = 'location-status';
-                        el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg2,rgba(13,17,23,0.9));color:var(--fg2,#aaa);padding:8px 18px;border-radius:20px;font-size:13px;z-index:9999;backdrop-filter:blur(8px);border:1px solid var(--border2,rgba(255,255,255,0.1));white-space:nowrap;pointer-events:none;';
-                        document.body.appendChild(el);
-                    }
-                    el.textContent = (typeof window.t === 'function') ? window.t('main.locationLoading') : '\u{1F4CD} Fetching current location...';
-                    el.style.display = '';
-                } catch(e) {}
-            })();
-        """.trimIndent(), null)
+        webView.evaluateJavascript("try { window.updateLocationStatus('waiting'); } catch(e) {}", null)
     }
 
     private fun hideLocationLoading() {
-        webView.evaluateJavascript("""
-            (function() {
-                try {
-                    var el = document.getElementById('location-status');
-                    if (el) el.style.display = 'none';
-                } catch(e) {}
-            })();
-        """.trimIndent(), null)
+        webView.evaluateJavascript("try { window.updateLocationStatus('ok', 3000); } catch(e) {}", null)
+        webView.postDelayed({ webView.evaluateJavascript("try { window.updateLocationStatus('clear'); } catch(e) {}", null) }, 3500)
     }
 
     override fun onDestroy() {

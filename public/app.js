@@ -42,6 +42,7 @@ const state = {
   locationMode: 'auto',
   manualLocation: null,
   flights: [],
+  _allFlights: [],
   selectedFlight: null,
   currentView: 'list',
   source: '---',
@@ -58,6 +59,7 @@ const state = {
   myLocationMarker: null,
   layerAirports: null,
   layerPlanes: null,
+  layerTrails: null,
   translations: { en: {}, pl: {} },
   routeCache: {},
   sortKey: 'distance',
@@ -232,10 +234,40 @@ function updateCompass(heading) {
   if (needle && heading != null) needle.style.transform = `translate(-50%,-100%) rotate(${heading}deg)`;
 }
 
+function updateCompassVisibility() {
+  const compass = document.getElementById('compass-mini');
+  if (!compass) return;
+  const show = state.locationMode === 'auto' && state.position != null;
+  compass.classList.toggle('hidden', !show);
+}
+
+function updateLocationStatus(type, duration) {
+  let el = document.getElementById('location-status');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'location-status';
+    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg2,rgba(13,17,23,0.9));color:var(--fg2,#aaa);padding:8px 18px;border-radius:20px;font-size:13px;z-index:9999;backdrop-filter:blur(8px);border:1px solid var(--border2,rgba(255,255,255,0.1));white-space:nowrap;pointer-events:none;transition:opacity .3s;';
+    document.body.appendChild(el);
+  }
+  if (type === 'clear') { el.style.display = 'none'; el.style.opacity = '0'; return; }
+  let text = '';
+  if (type === 'waiting') {
+    text = state.locationMode === 'auto' ? t('main.locationWaiting') : t('main.locationManual');
+  } else if (type === 'ok') {
+    text = t('main.locationOk');
+  }
+  el.textContent = text;
+  el.style.display = '';
+  el.style.opacity = '1';
+  if (duration > 0) setTimeout(() => { el.style.opacity = '0'; }, duration);
+}
+
 let deviceCompassTimer = null;
 function startDeviceCompass() {
   if (deviceCompassTimer) return;
   deviceCompassTimer = setInterval(() => {
+    updateCompassVisibility();
+    if (state.locationMode !== 'auto' || state.position == null) return;
     if (typeof AndroidLocation !== 'undefined') {
       const heading = AndroidLocation.getDeviceHeading();
       if (heading >= 0 && heading !== state.deviceHeading) {
@@ -380,6 +412,7 @@ function initSettings() {
   applyLanguage(state.lang);
   applyTheme(state.theme);
   applyNightMode(state.nightMode);
+  updateCompassVisibility();
 
   document.getElementById('setting-language').value = state.lang;
   document.getElementById('setting-units').value = state.units;
@@ -468,11 +501,14 @@ function initSettings() {
   locMode.addEventListener('change', e => {
     state.locationMode = e.target.value;
     manualSection.classList.toggle('hidden', state.locationMode === 'auto');
+    updateCompassVisibility();
     saveSettings();
     if (state.locationMode === 'manual' && state.manualLocation) {
       applyManualPosition(state.manualLocation.lat, state.manualLocation.lon, state.manualLocation.name);
     } else if (state.locationMode === 'auto') {
       initGeolocation();
+    } else {
+      updateLocationStatus('waiting');
     }
   });
 
@@ -563,6 +599,8 @@ function selectCity(place) {
 function applyManualPosition(lat, lon, name) {
   state.position = { lat, lon };
   updateLocationDisplay();
+  updateCompassVisibility();
+  updateLocationStatus('waiting');
   if (state.map) {
     state.map.panTo([lat, lon]);
     if (state.myLocationMarker) state.myLocationMarker.setLatLng([lat, lon]);
@@ -655,6 +693,7 @@ function processFlights() {
 
   state.flights.sort((a, b) => (a._distance || 9999) - (b._distance || 9999));
 
+  state._allFlights = state.flights.slice();
   const inRange = state.flights.filter(f => f._distance <= state.radius * NM_TO_KM);
   state.flights = inRange.slice(0, MAX_TRACKED);
 
@@ -717,6 +756,27 @@ function getCategoryIcon(cat) {
   if (!cat) return 'cat-a2';
   const key = typeof cat === 'number' ? `A${cat}` : cat;
   return `cat-${key.toLowerCase()}`;
+}
+
+function applyRadiusFilter() {
+  if (!state._allFlights || state._allFlights.length === 0) return;
+  const filtered = state._allFlights.filter(f => f._distance != null && f._distance <= state.radius * NM_TO_KM);
+  state.flights = filtered.slice(0, MAX_TRACKED);
+  updateStats();
+  renderFlightList();
+  if (state.currentView === 'radar') updateRadarMap();
+  if (state.selectedFlight) {
+    const stillSelected = state.flights.find(f => f.hex === state.selectedFlight.hex);
+    if (stillSelected) {
+      state.selectedFlight = stillSelected;
+      if (state.currentView === 'radar') updateRadarSidebar();
+      updateDetailPanel(stillSelected);
+    } else {
+      state.selectedFlight = null;
+      if (state.currentView === 'radar') hideRadarSidebar();
+    }
+  }
+  updateFlightCount();
 }
 
 function updateSourceBadge() {
@@ -919,9 +979,11 @@ function selectFlight(f) {
     fetchRoute(f.flight).then(route => {
       // console.log('[SELECT] route resolved', route);
       if (state.selectedFlight?.hex === f.hex) {
+        updateAirportMarkers();
         if (state.currentView === 'radar') {
           updateRadarSidebar();
           updateRadarRoute();
+          centerMapOnFlight(state.selectedFlight);
         }
         renderFlightList();
       }
@@ -1367,6 +1429,7 @@ function initRadarMap() {
   }
 
   state.layerPlanes = L.layerGroup().addTo(state.map);
+  state.layerTrails = L.layerGroup().addTo(state.map);
 
   state.map.on('click', () => {
     const prevHex = state.selectedFlight?.hex;
@@ -1417,6 +1480,18 @@ function updateRadarMap() {
       delete state.radarMarkers[hex];
     }
   });
+
+  state.layerTrails.clearLayers();
+  if (state.selectedFlight) {
+    const hex = state.selectedFlight.hex;
+    const trail = state.radarTrails[hex];
+    if (trail && trail.length >= 2) {
+      L.polyline(trail, {
+        color: THEME_COLORS[state.theme] || '#3b82f6',
+        weight: 3, opacity: 0.7
+      }).addTo(state.layerTrails);
+    }
+  }
 
   document.getElementById('radar-flight-count').textContent = `${state.flights.length} ${t('main.aircraft')}`;
   document.getElementById('radar-source').textContent = state.source;
@@ -1692,7 +1767,14 @@ function switchView(view) {
     document.getElementById('details-backdrop').classList.remove('active');
   }
 
-  if (view === 'radar') { updateRadarMap(); setTimeout(() => { state.map?.invalidateSize(); if (state.selectedFlight) centerMapOnFlight(state.selectedFlight); }, 100); }
+  if (view === 'radar') {
+    updateRadarMap();
+    if (state.selectedFlight) showRadarSidebar(state.selectedFlight);
+    setTimeout(() => {
+      state.map?.invalidateSize();
+      if (state.selectedFlight) centerMapOnFlight(state.selectedFlight);
+    }, 100);
+  }
   if (view === 'stats') { drawHourlyChart(); }
   if (view === 'list') renderFlightList();
 }
@@ -1790,6 +1872,7 @@ function initNavigation() {
     document.getElementById('radar-radius-value').textContent = formatRadiusUnit(state.radius);
     document.getElementById('range-badge').textContent = formatRadiusUnit(state.radius);
     if (state.radarCircle) state.radarCircle.setRadius(state.radius * NM_TO_KM * 1000);
+    applyRadiusFilter();
     saveSettings();
   });
 
@@ -1800,6 +1883,7 @@ function initNavigation() {
     document.getElementById('radius-value').textContent = formatRadiusUnit(state.radius);
     document.getElementById('range-badge').textContent = formatRadiusUnit(state.radius);
     if (state.radarCircle) state.radarCircle.setRadius(state.radius * NM_TO_KM * 1000);
+    applyRadiusFilter();
     saveSettings();
   });
 
@@ -1852,14 +1936,18 @@ function initGeolocation() {
   if (state.locationMode === 'manual' && state.manualLocation) {
     state.position = { lat: state.manualLocation.lat, lon: state.manualLocation.lon };
     updateLocationDisplay();
+    updateLocationStatus('waiting');
     fetchFlights();
     return;
   }
+  if (state.locationMode === 'auto') updateLocationStatus('waiting');
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       pos => {
         state.position = { lat: pos.coords.latitude, lon: pos.coords.longitude };
         console.log(`Location: ${state.position.lat}, ${state.position.lon}`);
+        updateCompassVisibility();
+        updateLocationStatus('ok', 3000);
         if (state.map) {
           state.map.panTo([state.position.lat, state.position.lon]);
           if (state.myLocationMarker) state.myLocationMarker.setLatLng([state.position.lat, state.position.lon]);
@@ -1869,8 +1957,7 @@ function initGeolocation() {
       err => {
         console.warn('Geolocation error:', err.message);
         state.position = { lat: 50.0, lon: 14.4 }; // Prague fallback
-        toast(`${t('app.error')}: ${err.message}`, 'error');
-        fetchFlights();
+        if (state.locationMode === 'auto') updateLocationStatus('waiting');
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );
@@ -1896,6 +1983,7 @@ async function loadTranslations() {
 async function init() {
   await loadTranslations();
   initSettings();
+  updateLocationStatus('waiting');
   initNavigation();
   updateClock();
   setInterval(updateClock, 1000);
@@ -1910,6 +1998,12 @@ async function init() {
     if (state.detailMap) state.detailMap.invalidateSize();
     drawHourlyChart();
   }, 250));
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && state.currentView === 'radar' && state.selectedFlight) {
+      state.map?.invalidateSize();
+      centerMapOnFlight(state.selectedFlight);
+    }
+  });
   document.documentElement.classList.toggle('portrait', window.innerHeight > window.innerWidth);
 }
 

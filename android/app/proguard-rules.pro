@@ -1,5 +1,5 @@
 # JavaScript interface
--keepclassmembers class com.ilikeplains.app.MainActivity$LocationJSInterface {
+-keepclassmembers class com.ilikeplanes.app.MainActivity$LocationJSInterface {
     @android.webkit.JavascriptInterface <methods>;
 }
 -keepclassmembers class * {

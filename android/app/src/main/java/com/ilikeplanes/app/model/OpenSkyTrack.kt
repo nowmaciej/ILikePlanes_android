@@ -1,4 +1,4 @@
-package com.ilikeplains.app.model
+﻿package com.ilikeplanes.app.model
 
 data class OpenSkyTrack(
     val trail: List<TrackPoint> = emptyList(),

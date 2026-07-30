@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.ilikeplains.app"
+    namespace = "com.ilikeplanes.app"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.ilikeplains.app"
+        applicationId = "com.ilikeplanes.app"
         minSdk = 29
         targetSdk = 35
         versionCode = 1

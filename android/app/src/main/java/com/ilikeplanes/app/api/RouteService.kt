@@ -1,7 +1,7 @@
-package com.ilikeplains.app.api
+﻿package com.ilikeplanes.app.api
 
-import com.ilikeplains.app.model.Airport
-import com.ilikeplains.app.model.RouteInfo
+import com.ilikeplanes.app.model.Airport
+import com.ilikeplanes.app.model.RouteInfo
 
 object RouteService {
 
