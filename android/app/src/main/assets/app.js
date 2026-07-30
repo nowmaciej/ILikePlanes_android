@@ -43,6 +43,7 @@ const state = {
   manualLocation: null,
   flights: [],
   _allFlights: [],
+  _prevView: null,
   selectedFlight: null,
   currentView: 'list',
   source: '---',
@@ -1292,6 +1293,7 @@ function predictFlyover(f) {
 }
 
 function showDetailPanel(f) {
+  state._prevView = state.currentView;
   const isPortrait = window.innerHeight > window.innerWidth;
   if (!isPortrait) {
     document.getElementById('view-list').classList.remove('active');
@@ -1763,7 +1765,7 @@ function switchView(view) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
   state.currentView = view;
   document.getElementById('view-details').classList.remove('active');
-  if (!window.innerHeight > window.innerWidth) {
+  if (window.innerHeight <= window.innerWidth) {
     document.getElementById('details-backdrop').classList.remove('active');
   }
 
@@ -1994,6 +1996,10 @@ async function init() {
 
   window.addEventListener('resize', debounce(() => {
     document.documentElement.classList.toggle('portrait', window.innerHeight > window.innerWidth);
+    if (state.currentView === 'details' && window.innerHeight > window.innerWidth) {
+      const prev = state._prevView || 'list';
+      document.getElementById(`view-${prev}`).classList.add('active');
+    }
     if (state.map) state.map.invalidateSize();
     if (state.detailMap) state.detailMap.invalidateSize();
     drawHourlyChart();
