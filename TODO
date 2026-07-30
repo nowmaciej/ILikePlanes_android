@@ -1,0 +1,6 @@
+- Promień śledzenia ma się zmieinać zaraz po zmianie ustawień na pasku. Grafika na mapie ma odrazu się odświeżać pokazując zmieniony obszar/promień.
+- Kompas na górnym pasku ma zawsze wskazywać północ jeżeli w ustawieniach jest włączona lokalizacja GPS. Jeżeli lokalizacja jest ustawiona na ręczną lub nie została jeszcze odczytana to kompas ma się nie pokazywać.
+- Zaznaczenie samolotu ma zawsze przenosić go na środek widocznej mapy (uwzględniając okno szczegółów).
+
+
+

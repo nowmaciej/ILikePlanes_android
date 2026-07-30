@@ -1,4 +1,18 @@
 {
+  "main": {
+    "icao": "ICAO",
+    "iata": "IATA",
+    "latitude": "Szeroko\u015B\u0107",
+    "longitude": "D\u0142ugo\u015B\u0107",
+    "aircraft": "samolot\u00F3w",
+    "groundDistance": "Odleg\u0142o\u015B\u0107 na ziemi",
+    "exitToast": "naci\u015Bnij jeszcze raz, aby zamkn\u0105\u0107",
+    "locationLoading": "pobieranie aktualnej lokalizacji...",
+    "gnd": "GND",
+    "originFlag": "Flaga pocz\u0105tku",
+    "destinationFlag": "Flaga celu",
+    "tier": "Poziom"
+  },
   "app": {
     "title": "I Like Planes",
     "loading": "Ładowanie...",
@@ -70,6 +84,10 @@
     "south": "S",
     "east": "E",
     "west": "W",
+    "northEast": "NE",
+    "southEast": "SE",
+    "southWest": "SW",
+    "northWest": "NW",
     "compass": "Kompas"
   },
   "radar": {
@@ -97,7 +115,11 @@
     "sessionStart": "Początek Sesji",
     "duration": "Czas Trwania",
     "hours": "godz",
-    "minutes": "min"
+    "minutes": "min",
+    "maxPerHour": "Max/godzin\u0119",
+    "maxSpeedRecord": "Max pr\u0119dko\u015B\u0107",
+    "maxAltRecord": "Max wysoko\u015B\u0107",
+    "totalTracked": "\u0141\u0105cznie \u015Bledzonych"
   },
   "settings": {
     "title": "Ustawienia",
@@ -145,7 +167,40 @@
     "noResults": "Brak wyników",
     "searching": "Szukanie...",
     "locationSet": "Lokalizacja ustawiona na",
-    "credits": "Kredyty"
+    "credits": "Kredyty",
+    "placeholderOptional": "Opcjonalne",
+    "placeholderClientSecret": "Client Secret",
+    "tierAnonymous": "Anonimowy",
+    "tierLicensed": "Licencjonowany",
+    "tierActiveFeeder": "Aktywny dostawca",
+    "tierStandard": "Standardowy"
+  },
+  "category": {
+    "noInfo": "Brak danych",
+    "surface": "Naziemny",
+    "light": "Lekki",
+    "small": "Ma\u0142y",
+    "large": "Du\u017Cy",
+    "highVortex": "Silny wir",
+    "heavy": "Ci\u0119\u017Cki",
+    "rotorcraft": "Wirop\u0142at",
+    "glider": "Szybowiec",
+    "lighterThanAir": "L\u017Cejszy od powietrza",
+    "parachutist": "Spadochroniarz",
+    "dropPlane": "Samolot desantowy",
+    "ultralight": "Ultralekki",
+    "poweredLift": "Nap\u0119dzany pionowy start",
+    "jet": "Odrzutowy",
+    "unknown": "Nieznany",
+    "helicopter": "\u015Amig\u0142owiec",
+    "emergency": "Awaryjny",
+    "landplaneSingle": "Samolot l\u0105dowy jednosilnikowy",
+    "landplaneMulti": "Samolot l\u0105dowy wielosilnikowy",
+    "amphibianSingle": "P\u0142atowiec-amfibia jednosilnikowy",
+    "amphibianMulti": "P\u0142atowiec-amfibia wielosilnikowy",
+    "surfaceShip": "Statek nawodny",
+    "emergencySurface": "Awaryjny naziemny",
+    "surfaceSupport": "Wsparcie naziemne"
   },
   "themes": {
     "default": "Domyślny",

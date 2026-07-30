@@ -1,4 +1,18 @@
 {
+  "main": {
+    "icao": "ICAO",
+    "iata": "IATA",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "aircraft": "aircraft",
+    "groundDistance": "Ground distance",
+    "exitToast": "Press again to close",
+    "locationLoading": "Fetching current location...",
+    "gnd": "GND",
+    "originFlag": "Origin flag",
+    "destinationFlag": "Destination flag",
+    "tier": "Tier"
+  },
   "app": {
     "title": "I Like Planes",
     "loading": "Loading...",
@@ -70,6 +84,10 @@
     "south": "S",
     "east": "E",
     "west": "W",
+    "northEast": "NE",
+    "southEast": "SE",
+    "southWest": "SW",
+    "northWest": "NW",
     "compass": "Compass"
   },
   "radar": {
@@ -97,7 +115,11 @@
     "sessionStart": "Session Start",
     "duration": "Duration",
     "hours": "hours",
-    "minutes": "min"
+    "minutes": "min",
+    "maxPerHour": "Max/hr",
+    "maxSpeedRecord": "Max speed",
+    "maxAltRecord": "Max alt",
+    "totalTracked": "Total tracked"
   },
   "settings": {
     "title": "Settings",
@@ -145,7 +167,40 @@
     "noResults": "No results found",
     "searching": "Searching...",
     "locationSet": "Location set to",
-    "credits": "Credits"
+    "credits": "Credits",
+    "placeholderOptional": "Optional",
+    "placeholderClientSecret": "Client Secret",
+    "tierAnonymous": "Anonymous",
+    "tierLicensed": "Licensed",
+    "tierActiveFeeder": "Active Feeder",
+    "tierStandard": "Standard"
+  },
+  "category": {
+    "noInfo": "No info",
+    "surface": "Surface",
+    "light": "Light",
+    "small": "Small",
+    "large": "Large",
+    "highVortex": "High vortex",
+    "heavy": "Heavy",
+    "rotorcraft": "Rotorcraft",
+    "glider": "Glider",
+    "lighterThanAir": "Lighter-than-air",
+    "parachutist": "Parachutist",
+    "dropPlane": "Drop plane",
+    "ultralight": "Ultralight",
+    "poweredLift": "Powered lift",
+    "jet": "Jet",
+    "unknown": "Unknown",
+    "helicopter": "Helicopter",
+    "emergency": "Emergency",
+    "landplaneSingle": "Landplane single engine",
+    "landplaneMulti": "Landplane multi engine",
+    "amphibianSingle": "Amphibian single",
+    "amphibianMulti": "Amphibian multi",
+    "surfaceShip": "Surface ship",
+    "emergencySurface": "Emergency surface",
+    "surfaceSupport": "Surface support"
   },
   "themes": {
     "default": "Default",

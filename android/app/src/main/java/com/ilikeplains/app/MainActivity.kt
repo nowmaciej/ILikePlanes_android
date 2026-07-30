@@ -200,7 +200,7 @@ class MainActivity : AppCompatActivity() {
                         el.style.cssText = 'position:fixed;bottom:36px;left:50%;transform:translateX(-50%);background:var(--bg2,rgba(13,17,23,0.9));color:var(--fg2,#aaa);padding:10px 20px;border-radius:24px;font-size:14px;z-index:99999;backdrop-filter:blur(12px);border:1px solid var(--border2,rgba(255,255,255,0.12));white-space:nowrap;pointer-events:none;transition:opacity .3s;';
                         document.body.appendChild(el);
                     }
-                    el.textContent = '\u23F2 naci\u015Bnij jeszcze raz, aby zamkn\u0105\u0107';
+                    el.textContent = (typeof window.t === 'function') ? window.t('main.exitToast') : '\u23F2 Press again to close';
                     el.style.display = '';
                     el.style.opacity = '1';
                     setTimeout(function() { el.style.opacity = '0'; }, 1800);
@@ -342,7 +342,7 @@ class MainActivity : AppCompatActivity() {
                         el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg2,rgba(13,17,23,0.9));color:var(--fg2,#aaa);padding:8px 18px;border-radius:20px;font-size:13px;z-index:9999;backdrop-filter:blur(8px);border:1px solid var(--border2,rgba(255,255,255,0.1));white-space:nowrap;pointer-events:none;';
                         document.body.appendChild(el);
                     }
-                    el.textContent = '\u{1F4CD} pobieranie aktualnej lokalizacji...';
+                    el.textContent = (typeof window.t === 'function') ? window.t('main.locationLoading') : '\u{1F4CD} Fetching current location...';
                     el.style.display = '';
                 } catch(e) {}
             })();

@@ -117,12 +117,12 @@ function bearing(lat1, lon1, lat2, lon2) {
 }
 
 function bearingToCardinal(b) {
-  const dirs = ['N','NE','E','SE','S','SW','W','NW'];
+  const dirs = [t('spotter.north'),t('spotter.northEast'),t('spotter.east'),t('spotter.southEast'),t('spotter.south'),t('spotter.southWest'),t('spotter.west'),t('spotter.northWest')];
   return dirs[Math.round(b / 45) % 8];
 }
 
 function formatAltitude(alt, unit) {
-  if (alt == null || alt === 'ground') return 'GND';
+  if (alt == null || alt === 'ground') return t('main.gnd');
   const ft = Math.round(alt);
   if (unit === 'metric') return `${Math.round(ft * FT_TO_M)}m`;
   return `${ft}ft`;
@@ -276,7 +276,17 @@ function applyLanguage(lang) {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     const val = t(key);
-    if (val !== key) el.textContent = val;
+    if (val) el.textContent = val;
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    const val = t(key);
+    if (val) el.placeholder = val;
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    const val = t(key);
+    if (val) el.title = val;
   });
 }
 
@@ -357,11 +367,11 @@ function displayCachedCredits() {
   const pct = limit > 0 ? (rem / limit * 100) : 0;
   barEl.style.width = pct + '%';
   barEl.style.background = pct > 50 ? 'var(--success)' : pct > 20 ? 'var(--warning)' : 'var(--danger)';
-  let tier = 'Anonymous';
-  if (limit >= 14400) tier = 'Licensed';
-  else if (limit >= 8000) tier = 'Active Feeder';
-  else if (limit >= 4000) tier = 'Standard';
-  tierEl.textContent = `Tier: ${tier}`;
+  let tier = t('settings.tierAnonymous');
+  if (limit >= 14400) tier = t('settings.tierLicensed');
+  else if (limit >= 8000) tier = t('settings.tierActiveFeeder');
+  else if (limit >= 4000) tier = t('settings.tierStandard');
+  tierEl.textContent = `${t('main.tier')}: ${tier}`;
   tierEl.style.color = 'var(--fg3)';
 }
 
@@ -686,20 +696,21 @@ function calcElevation(altFt, distKm) {
 function decodeCategory(cat) {
   if (!cat) return '';
   const categories = {
-    'A0':'No info','A1':'Surface','A2':'Light','A3':'Small',
-    'A4':'Large','A5':'High vortex','A6':'Heavy','A7':'Rotorcraft',
-    'B0':'No info','B1':'Glider','B2':'Lighter-than-air',
-    'B3':'Parachutist','B4':'Drop plane','B5':'Ultralight',
-    'C0':'No info','C1':'Powered lift','C2':'Jet',
-    'C3':'Unknown','C4':'Helicopter','C5':'Glider','C6':'Lighter-than-air',
-    'D0':'No info','D1':'Surface','D2':'Emergency',
-    'L1':'Landplane single engine','L2':'Landplane multi engine',
-    'L3':'Amphibian single','L4':'Amphibian multi',
-    'L5':'Helicopter','L6':'Glider','L7':'Lighter-than-air',
-    'S1':'Surface ship','S2':'Emergency surface','S3':'Surface support'
+    'A0':'category.noInfo','A1':'category.surface','A2':'category.light','A3':'category.small',
+    'A4':'category.large','A5':'category.highVortex','A6':'category.heavy','A7':'category.rotorcraft',
+    'B0':'category.noInfo','B1':'category.glider','B2':'category.lighterThanAir',
+    'B3':'category.parachutist','B4':'category.dropPlane','B5':'category.ultralight',
+    'C0':'category.noInfo','C1':'category.poweredLift','C2':'category.jet',
+    'C3':'category.unknown','C4':'category.helicopter','C5':'category.glider','C6':'category.lighterThanAir',
+    'D0':'category.noInfo','D1':'category.surface','D2':'category.emergency',
+    'L1':'category.landplaneSingle','L2':'category.landplaneMulti',
+    'L3':'category.amphibianSingle','L4':'category.amphibianMulti',
+    'L5':'category.helicopter','L6':'category.glider','L7':'category.lighterThanAir',
+    'S1':'category.surfaceShip','S2':'category.emergencySurface','S3':'category.surfaceSupport'
   };
   const key = typeof cat === 'number' ? `A${cat}` : cat;
-  return categories[key] || cat;
+  const langKey = categories[key];
+  return langKey ? t(langKey) : cat;
 }
 
 function getCategoryIcon(cat) {
@@ -1036,7 +1047,7 @@ function showRadarSidebar(f) {
   drawSidebarCompass(f._bearing || 0, f._elevation || 0);
 
   const groundDist = f._distance != null ? (state.rangeUnit === 'km' ? (f._distance >= 10 ? Math.round(f._distance) + ' km' : f._distance.toFixed(2) + ' km') : ((f._distance / NM_TO_KM) >= 10 ? Math.round(f._distance / NM_TO_KM) + ' NM' : (f._distance / NM_TO_KM).toFixed(2) + ' NM')) : '---';
-  document.getElementById('rsb-ground-dist').textContent = `Ground distance: ${groundDist}`;
+  document.getElementById('rsb-ground-dist').textContent = `${t('main.groundDistance')}: ${groundDist}`;
 
   const pred = predictFlyover(f);
   const predEl = document.getElementById('rsb-prediction');
@@ -1061,7 +1072,7 @@ function drawSidebarCompass(bearingDeg, elevationDeg) {
   const nx = cx + 60*Math.cos(needleRad), ny = cy + 60*Math.sin(needleRad);
   html += `<line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="var(--danger)" stroke-width="3" stroke-linecap="round"/>`;
   html += `<circle cx="${cx}" cy="${cy}" r="4" fill="var(--accent)"/>`;
-  ['N','E','S','W'].forEach((d,i) => {
+  [t('spotter.north'),t('spotter.east'),t('spotter.south'),t('spotter.west')].forEach((d,i) => {
     const angle = i * 90 - 90;
     const rad = degToRad(angle);
     const tx = cx + (r-18)*Math.cos(rad), ty = cy + (r-18)*Math.sin(rad);
@@ -1185,7 +1196,7 @@ function drawSpotterCompass(bearingDeg, elevationDeg) {
   html += `<line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="var(--danger)" stroke-width="3" stroke-linecap="round"/>`;
   html += `<circle cx="${cx}" cy="${cy}" r="4" fill="var(--accent)"/>`;
 
-  ['N','E','S','W'].forEach((d,i) => {
+  [t('spotter.north'),t('spotter.east'),t('spotter.south'),t('spotter.west')].forEach((d,i) => {
     const angle = i * 90 - 90;
     const rad = degToRad(angle);
     const tx = cx + (r-18)*Math.cos(rad), ty = cy + (r-18)*Math.sin(rad);
@@ -1259,9 +1270,9 @@ function updateDetailPanel(f) {
 
   if (f.flagImg) {
     document.getElementById('detail-flag-from').src = f.flagImg.from;
-    document.getElementById('detail-flag-from').alt = f.origin?.icao || 'Origin flag';
+    document.getElementById('detail-flag-from').alt = f.origin?.icao || t('main.originFlag');
     document.getElementById('detail-flag-to').src = f.flagImg.to;
-    document.getElementById('detail-flag-to').alt = f.destination?.icao || 'Destination flag';
+    document.getElementById('detail-flag-to').alt = f.destination?.icao || t('main.destinationFlag');
   }
 
   const progressFill = document.getElementById('detail-progress-fill');
@@ -1407,7 +1418,7 @@ function updateRadarMap() {
     }
   });
 
-  document.getElementById('radar-flight-count').textContent = `${state.flights.length} aircraft`;
+  document.getElementById('radar-flight-count').textContent = `${state.flights.length} ${t('main.aircraft')}`;
   document.getElementById('radar-source').textContent = state.source;
 }
 
@@ -1497,14 +1508,14 @@ function drawDailyRecords() {
   const records = [];
 
   const maxFlights = Math.max(...Object.values(state.sessionHourly).map(v => v), 0);
-  records.push({ label: 'Max/hr', value: maxFlights });
+  records.push({ label: t('stats.maxPerHour'), value: maxFlights });
 
   let maxSpeedVal = 0, maxSpeedFlight = null;
   state.sessionFlights.forEach(({ flight: f }) => { if (f.gs && f.gs > maxSpeedVal) { maxSpeedVal = f.gs; maxSpeedFlight = f; } });
   if (maxSpeedVal) {
     const airline = maxSpeedFlight ? getAirlineInfo(maxSpeedFlight).name : '';
     const callsign = maxSpeedFlight ? getFlightCallsign(maxSpeedFlight) : '---';
-    records.push({ label: 'Max speed', value: formatSpeed(maxSpeedVal, state.units), detail: `${callsign} \u2022 ${airline}` });
+    records.push({ label: t('stats.maxSpeedRecord'), value: formatSpeed(maxSpeedVal, state.units), detail: `${callsign} \u2022 ${airline}` });
   }
 
   let maxAltVal = 0, maxAltFlight = null;
@@ -1512,10 +1523,10 @@ function drawDailyRecords() {
   if (maxAltVal) {
     const airline = maxAltFlight ? getAirlineInfo(maxAltFlight).name : '';
     const callsign = maxAltFlight ? getFlightCallsign(maxAltFlight) : '---';
-    records.push({ label: 'Max alt', value: formatAltitude(maxAltVal, state.units), detail: `${callsign} \u2022 ${airline}` });
+    records.push({ label: t('stats.maxAltRecord'), value: formatAltitude(maxAltVal, state.units), detail: `${callsign} \u2022 ${airline}` });
   }
 
-  records.push({ label: 'Total tracked', value: state.sessionFlights.size });
+  records.push({ label: t('stats.totalTracked'), value: state.sessionFlights.size });
 
   container.innerHTML = records.map(r =>
     `<div class="record-item"><span style="color:var(--fg3)">${r.label}</span><span style="font-weight:600;font-family:var(--font-mono)">${r.value}</span>${r.detail ? `<span class="record-detail">${r.detail}</span>` : ''}</div>`
@@ -1906,6 +1917,7 @@ if (document.readyState === 'loading') {
   init();
 }
 
+window.t = t;
 window.handleBack = handleBack;
 window.state = state;
 window.fetchFlights = fetchFlights;

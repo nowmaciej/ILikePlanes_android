@@ -21,24 +21,24 @@
       <div class="top-center">
         <div id="compass-mini" class="compass-mini">
           <div class="compass-ring">
-            <span class="dir-n">N</span>
-            <span class="dir-e">E</span>
-            <span class="dir-s">S</span>
-            <span class="dir-w">W</span>
+            <span class="dir-n" data-i18n="spotter.north">N</span>
+            <span class="dir-e" data-i18n="spotter.east">E</span>
+            <span class="dir-s" data-i18n="spotter.south">S</span>
+            <span class="dir-w" data-i18n="spotter.west">W</span>
           </div>
           <div id="compass-needle" class="compass-needle"></div>
         </div>
       </div>
       <div class="top-right">
         <span id="clock"></span>
-        <button id="btn-settings" class="icon-btn" title="Settings">&#9881;</button>
+        <button id="btn-settings" class="icon-btn" data-i18n-title="settings.title" title="Settings">&#9881;</button>
       </div>
     </header>
 
     <main id="main-content">
       <div id="view-list" class="view active">
         <div id="list-controls">
-          <label id="label-radius" for="radius-slider">Radius:</label>
+          <label id="label-radius" for="radius-slider" data-i18n="list.radius">Radius:</label>
           <input type="range" id="radius-slider" min="10" max="250" value="250" step="5">
           <span id="radius-value">250 NM</span>
           <span id="flight-count">0 / 0</span>
@@ -131,7 +131,7 @@
         <div id="radar-map"></div>
         <div id="radar-overlay">
           <div id="radar-controls">
-            <label id="radar-label-radius" for="radar-radius-slider">Radius:</label>
+            <label id="radar-label-radius" for="radar-radius-slider" data-i18n="list.radius">Radius:</label>
             <input type="range" id="radar-radius-slider" min="10" max="250" value="250" step="5">
             <span id="radar-radius-value">250 NM</span>
           </div>
@@ -187,16 +187,16 @@
               </div>
             </div>
             <div class="rsb-grid">
-              <div class="rsb-item"><label>ICAO</label><span id="asb-icao"></span></div>
-              <div class="rsb-item"><label>IATA</label><span id="asb-iata"></span></div>
+              <div class="rsb-item"><label data-i18n="main.icao">ICAO</label><span id="asb-icao"></span></div>
+              <div class="rsb-item"><label data-i18n="main.iata">IATA</label><span id="asb-iata"></span></div>
               <div class="rsb-item"><label data-i18n="airport.country">Country</label><span id="asb-country"></span></div>
               <div class="rsb-item"><label data-i18n="airport.flightsHere">Flights</label><span id="asb-flights"></span></div>
               <div class="rsb-item"><label data-i18n="spotter.distance">Distance</label><span id="asb-dist"></span></div>
               <div class="rsb-item"><label data-i18n="spotter.bearing">Bearing</label><span id="asb-bearing"></span></div>
             </div>
             <div class="rsb-coords">
-              <div class="rsb-item"><label>Latitude</label><span id="asb-lat"></span></div>
-              <div class="rsb-item"><label>Longitude</label><span id="asb-lon"></span></div>
+              <div class="rsb-item"><label data-i18n="main.latitude">Latitude</label><span id="asb-lat"></span></div>
+              <div class="rsb-item"><label data-i18n="main.longitude">Longitude</label><span id="asb-lon"></span></div>
             </div>
             <div class="asb-metar-group hidden">
               <h4 class="asb-metar-title"><span data-i18n="weather.metar">METAR</span> <span id="asb-metar-icao"></span></h4>
@@ -251,15 +251,15 @@
     </main>
 
     <nav id="bottom-nav">
-      <button class="nav-btn active" data-view="list" data-i18n="nav.list" title="List">
+      <button class="nav-btn active" data-view="list" data-i18n="nav.list" data-i18n-title="nav.list" title="List">
         <svg viewBox="0 0 24 24" aria-hidden="true"><use href="icons.svg#icon-list"/></svg>
         <span>List</span>
       </button>
-      <button class="nav-btn" data-view="radar" data-i18n="nav.radar" title="Radar">
+      <button class="nav-btn" data-view="radar" data-i18n="nav.radar" data-i18n-title="nav.radar" title="Radar">
         <svg viewBox="0 0 24 24" aria-hidden="true"><use href="icons.svg#icon-radar"/></svg>
         <span>Radar</span>
       </button>
-      <button class="nav-btn" data-view="stats" data-i18n="nav.stats" title="Stats">
+      <button class="nav-btn" data-view="stats" data-i18n="nav.stats" data-i18n-title="nav.stats" title="Stats">
         <svg viewBox="0 0 24 24" aria-hidden="true"><use href="icons.svg#icon-stats"/></svg>
         <span>Stats</span>
       </button>
@@ -348,7 +348,7 @@
               <div class="setting-row">
                 <label data-i18n="settings.citySearch">Search city...</label>
                 <div class="location-search-wrap">
-                  <input type="text" id="setting-city-search" placeholder="Warszawa, Berlin, London..." autocomplete="off">
+                  <input type="text" id="setting-city-search" data-i18n-placeholder="settings.citySearch" placeholder="Warszawa, Berlin, London..." autocomplete="off">
                   <div id="city-search-results" class="city-search-results hidden"></div>
                 </div>
               </div>
@@ -377,18 +377,18 @@
             </div>
             <div class="setting-row">
               <label data-i18n="settings.flightAwareKey">FlightAware API Key</label>
-              <input type="password" id="setting-fa-key" placeholder="Optional">
+              <input type="password" id="setting-fa-key" data-i18n-placeholder="settings.placeholderOptional" placeholder="Optional">
             </div>
             <div class="settings-group">
               <h4 class="settings-group-title">OpenSky Network</h4>
-              <a id="opensky-get-key" href="https://opensky-network.org" target="_blank" rel="noopener" class="opensky-get-key" data-i18n="settings.openskyGetKey">Zdobądź klucz</a>
+              <a id="opensky-get-key" href="https://opensky-network.org" target="_blank" rel="noopener" class="opensky-get-key" data-i18n="settings.openskyGetKey">Get API key</a>
               <div class="setting-row">
                 <label data-i18n="settings.openskyClientId">Client ID</label>
                 <input type="text" id="setting-opensky-client-id" placeholder="your@email.com-api-client">
               </div>
               <div class="setting-row">
                 <label data-i18n="settings.openskyClientSecret">Client Secret</label>
-                <input type="password" id="setting-opensky-client-secret" placeholder="Client Secret">
+                <input type="password" id="setting-opensky-client-secret" data-i18n-placeholder="settings.placeholderClientSecret" placeholder="Client Secret">
               </div>
               <div class="setting-row">
                 <label data-i18n="settings.openskyRouteData">OpenSky Route Data</label>

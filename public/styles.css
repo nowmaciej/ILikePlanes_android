@@ -577,42 +577,38 @@ body {
 }
 
 /* ===== DETAIL BOTTOM SHEET (portrait) ===== */
-@media (orientation:portrait) {
-  #details-backdrop { display:none !important; }
-  #details-handle {
-    width:36px; height:4px; border-radius:2px;
-    background:var(--border2); margin:8px auto; flex-shrink:0;
-  }
-  #view-details {
-    position:fixed; bottom:0; left:0; right:0;
-    z-index:999;
-    height:33.33vh;
-    background:var(--bg2); border-radius:16px 16px 0 0;
-    box-shadow:0 -4px 24px rgba(0,0,0,0.5);
-    overflow-y:auto;
-    scrollbar-width:none; -ms-overflow-style:none;
-    font-size:11px;
-  }
-  #view-details::-webkit-scrollbar { display:none; }
-  #view-details.active { display:flex; }
-  #view-details #details-header { padding:6px 10px; }
-  #view-details #detail-callsign { font-size:14px; }
-  #view-details #details-body { padding:8px; }
-  #view-details #detail-airline-logo-wrap { display:none; }
-  #view-details #detail-route-wrap { margin-bottom:8px; padding:8px; font-size:10px; }
-  #view-details .route-endpoint .code { font-size:9px; }
-  #view-details .route-endpoint .time { font-size:10px; }
-  #view-details .flag-icon { width:18px; height:12px; }
-  #view-details #detail-grid { gap:4px; margin-bottom:8px; grid-template-columns:1fr 1fr; }
-  #view-details .detail-item { padding:6px; }
-  #view-details .detail-item label { font-size:8px; margin-bottom:2px; }
-  #view-details .detail-item span { font-size:11px; }
-  #view-details #detail-route-map-wrap { display:none; }
+html.portrait #details-backdrop { display:none !important; }
+html.portrait #details-handle {
+  width:36px; height:4px; border-radius:2px;
+  background:var(--border2); margin:8px auto; flex-shrink:0;
 }
+html.portrait #view-details {
+  position:fixed; bottom:0; left:0; right:0;
+  z-index:999;
+  height:33.33vh;
+  background:var(--bg2); border-radius:16px 16px 0 0;
+  box-shadow:0 -4px 24px rgba(0,0,0,0.5);
+  overflow-y:auto;
+  scrollbar-width:none; -ms-overflow-style:none;
+  font-size:11px;
+}
+html.portrait #view-details::-webkit-scrollbar { display:none; }
+html.portrait #view-details.active { display:flex; }
+html.portrait #view-details #details-header { padding:6px 10px; }
+html.portrait #view-details #detail-callsign { font-size:14px; }
+html.portrait #view-details #details-body { padding:8px; }
+html.portrait #view-details #detail-airline-logo-wrap { display:none; }
+html.portrait #view-details #detail-route-wrap { margin-bottom:8px; padding:8px; font-size:10px; }
+html.portrait #view-details .route-endpoint .code { font-size:9px; }
+html.portrait #view-details .route-endpoint .time { font-size:10px; }
+html.portrait #view-details .flag-icon { width:18px; height:12px; }
+html.portrait #view-details #detail-grid { gap:4px; margin-bottom:8px; grid-template-columns:1fr 1fr; }
+html.portrait #view-details .detail-item { padding:6px; }
+html.portrait #view-details .detail-item label { font-size:8px; margin-bottom:2px; }
+html.portrait #view-details .detail-item span { font-size:11px; }
+html.portrait #view-details #detail-route-map-wrap { display:none; }
 
 /* ===== DETAIL FULLSCREEN (landscape) ===== */
-@media (orientation:landscape) {
-  #view-details { position:absolute; inset:0; border-radius:0; max-height:none; transform:none; transition:none; box-shadow:none; }
-  #details-backdrop { display:none !important; }
-  #details-handle { display:none; }
-}
+html:not(.portrait) #view-details { position:absolute; inset:0; border-radius:0; max-height:none; transform:none; transition:none; box-shadow:none; }
+html:not(.portrait) #details-backdrop { display:none !important; }
+html:not(.portrait) #details-handle { display:none; }
