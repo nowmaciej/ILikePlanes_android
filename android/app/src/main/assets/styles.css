@@ -182,31 +182,6 @@ body {
 .speed-cell { font-family:var(--font-mono); }
 .alt-cell { font-family:var(--font-mono); }
 
-/* ===== SPOTTER PANEL ===== */
-#spotter-panel {
-  border-top:2px solid var(--accent); background:var(--bg2);
-  padding:12px; flex-shrink:0; max-height:220px; overflow:auto;
-}
-#spotter-content { display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; }
-#spotter-airline-logo { width:48px; height:48px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; overflow:hidden; }
-#spotter-airline-logo img { width:100%; height:100%; object-fit:contain; }
-#spotter-info { flex:1; min-width:120px; }
-#spotter-callsign { font-size:16px; font-family:var(--font-mono); color:var(--accent2); }
-#spotter-route { font-size:13px; color:var(--fg2); margin-top:4px; }
-#spotter-compass-wrap { width:100px; height:100px; position:relative; }
-#spotter-compass { width:100%; height:100%; }
-#spotter-elevation-label {
-  position:absolute; bottom:-4px; left:50%; transform:translateX(-50%);
-  font-size:10px; color:var(--fg2); background:var(--bg); padding:1px 4px;
-  border-radius:4px;
-}
-#spotter-prediction {
-  font-size:13px; color:var(--accent); padding:8px;
-  background:var(--accent-bg); border-radius:var(--radius-sm);
-  width:100%;
-}
-#spotter-details { display:flex; gap:16px; flex-wrap:wrap; width:100%; font-size:12px; color:var(--fg2); }
-
 /* ===== DETAIL VIEW ===== */
 #details-panel { flex:1; overflow:auto; }
 #details-header {

@@ -995,7 +995,6 @@ function selectFlight(f) {
   state.selectedFlight = f;
   hideAirportSidebar();
   renderFlightList();
-  showSpotterPanel(f);
   updateCompass(state.deviceHeading);
   if (state.currentView === 'radar') {
     showRadarSidebar(f);
@@ -1067,43 +1066,6 @@ function centerMapOnFlight(f) {
   });
 }
 
-
-function showSpotterPanel(f) {
-  const panel = document.getElementById('spotter-panel');
-  panel.classList.remove('hidden');
-
-  const airline = getAirlineInfo(f);
-
-  document.getElementById('spotter-callsign').textContent = getFlightCallsign(f);
-  document.getElementById('spotter-route').textContent = `${airline.name} ${f.t ? '(' + f.t + ')' : ''}`;
-
-  const logoEl = document.getElementById('spotter-airline-logo');
-  logoEl.innerHTML = '';
-  const img = h('img', { alt: airline.name });
-  img.onerror = function() { this.style.display='none'; logoEl.appendChild(h('span', { text: (airline.icao || '?').substring(0,2) })); };
-  // img.src = getAirlineLogo(f.flight, f.r);
-  logoEl.appendChild(img);
-
-  drawSpotterCompass(f._bearing || 0, f._elevation || 0);
-
-  const pred = predictFlyover(f);
-  const predEl = document.getElementById('spotter-prediction');
-  if (pred) {
-    predEl.textContent = `${t('spotter.flyover')} ~${pred.minutes} ${t('spotter.minutes')} ${t('spotter.at')} ${pred.distance} ${state.units === 'metric' ? 'km' : 'mi'}`;
-    predEl.classList.remove('hidden');
-  } else {
-    predEl.classList.add('hidden');
-  }
-
-  const details = document.getElementById('spotter-details');
-  details.innerHTML = [
-    `${t('spotter.bearing')}: ${Math.round(f._bearing || 0)}\u00B0 ${bearingToCardinal(f._bearing || 0)}`,
-    `${t('spotter.elevation')}: ${(f._elevation || 0).toFixed(1)}\u00B0`,
-    `${t('spotter.distance')}: ${f._distance != null ? formatDistance(f._distance) : '---'}`,
-    `${t('details.altitude')}: ${formatAltitude(f.alt_baro, state.units)}`,
-    `${t('details.speed')}: ${formatSpeed(f.gs, state.units)}`
-  ].join(' \u2022 ');
-}
 
 function showRadarSidebar(f) {
   const sidebar = document.getElementById('radar-sidebar');
@@ -1273,32 +1235,6 @@ async function updateRadarRoute() {
       }).addTo(layer);
     }
   } catch (e) {}
-}
-
-function drawSpotterCompass(bearingDeg, elevationDeg) {
-  const svg = document.getElementById('spotter-compass');
-  const cx = 100, cy = 100, r = 85;
-  let html = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--border2)" stroke-width="2"/>`;
-  for (let i = 0; i < 360; i += 30) {
-    const rad = degToRad(i - 90);
-    const x1 = cx + (r-6)*Math.cos(rad), y1 = cy + (r-6)*Math.sin(rad);
-    const x2 = cx + r*Math.cos(rad), y2 = cy + r*Math.sin(rad);
-    html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--fg3)" stroke-width="1"/>`;
-  }
-  const needleRad = degToRad(bearingDeg - 90);
-  const nx = cx + 60*Math.cos(needleRad), ny = cy + 60*Math.sin(needleRad);
-  html += `<line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="var(--danger)" stroke-width="3" stroke-linecap="round"/>`;
-  html += `<circle cx="${cx}" cy="${cy}" r="4" fill="var(--accent)"/>`;
-
-  [t('spotter.north'),t('spotter.east'),t('spotter.south'),t('spotter.west')].forEach((d,i) => {
-    const angle = i * 90 - 90;
-    const rad = degToRad(angle);
-    const tx = cx + (r-18)*Math.cos(rad), ty = cy + (r-18)*Math.sin(rad);
-    html += `<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central" fill="var(--fg2)" font-size="10" font-weight="600">${d}</text>`;
-  });
-
-  svg.innerHTML = html;
-  document.getElementById('spotter-elevation-label').textContent = `${elevationDeg.toFixed(1)}\u00B0`;
 }
 
 function predictFlyover(f) {
