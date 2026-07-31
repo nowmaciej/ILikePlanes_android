@@ -1,19 +1,23 @@
-# FlightRadar Local
+# I Like Planes
 
-A local flight radar application with real-time ADS-B tracking, spotter tools, and multiple data sources.
+A local flight radar app for Android with real-time ADS-B tracking, a radar map, spotter tools, and multiple data sources. Built as a native Kotlin shell (`MainActivity` + `ApiBridge`) that hosts a WebView UI (Leaflet.js) served from app assets.
 
 ## Features
 
-- **Live Flight Tracking** - Real-time aircraft positions within configurable radius (10-250 NM)
-- **Flight Details** - Airline, route, altitude, speed, squawk, ADS-B category, aircraft photos
-- **Spotter Tools** - Compass bearing, elevation angle, flyover predictions
-- **Multiple Views** - Flight list, radar map, session statistics
-- **Screensaver Mode** - Aircraft tracking visualization with clock and weather
-- **7 Color Themes** - Default, Dark, Light, Ocean, Forest, Sunset, Cyberpunk
+- **Live Flight Tracking** - Real-time aircraft positions within a configurable radius
+- **Range & Units** - Radius slider (1-250 NM), range displayed in km or NM (default km)
+- **Flight List** - Sortable table with callsign, route, airline, type, altitude, speed, distance, heading
+- **Radar Map** - OpenStreetMap + Leaflet with plane markers, your location marker, radius circle, flight trails, airport markers and route polylines
+- **Flight Details** - Airline, route with origin/destination and times, altitude, speed, squawk, ADS-B category, ICAO24; bottom sheet in portrait, fullscreen in landscape
+- **GPS Compass** - Top-bar compass (rotating dial + fixed heading arrow) shown when GPS mode is active
+- **Location Modes** - Auto GPS via native FusedLocationProvider (continuous updates) or manual city search (Nominatim)
+- **Session Statistics** - Total flights, unique aircraft, average altitude, max speed, hourly activity chart, top airlines, daily records
+- **Weather** - METAR for the nearest airport
+- **Multiple Data Sources** - airplanes.live, adsb.lol, adsb.fi, or a local dump1090/readsb receiver with internet fallback
+- **OpenSky Network** - Optional route data with API credits monitor and connection error codes
+- **8 Color Themes** - Default, Dark, Light, Ocean, Forest, Sunset, Cyber, Radar
 - **Night Mode** - Reduced brightness for dark environments
-- **Bilingual UI** - English and Polish language support
-- **Touch Optimized** - Responsive design for touchscreen devices
-- **Manual Location** - Set location manually with city search (Nominatim geocoding)
+- **Bilingual UI** - English and Polish
 
 ## Data Sources
 
@@ -21,77 +25,64 @@ A local flight radar application with real-time ADS-B tracking, spotter tools, a
 - **adsb.lol** - Open-source ADS-B network
 - **adsb.fi** - Flight data aggregator
 - **Local Receiver** - dump1090/readsb on LAN with internet fallback
+- **OpenSky Network** - Flight route data (optional, requires API credentials)
 
-## Installation
+## Architecture
+
+```
+I Like Planes (Android)
+│
+├── android/app/src/main/
+│   ├── java/com/ilikeplanes/app/
+│   │   ├── MainActivity.kt        # WebView host, GPS (FusedLocationProvider), compass sensor
+│   │   ├── SplashActivity.kt      # Launch screen
+│   │   ├── ApiBridge.kt           # Intercepts /api/* requests, proxies to services
+│   │   └── api/                   # Native services:
+│   │       ├── AdsbService.kt     #   ADS-B flight data (airplanes.live, adsb.lol, adsb.fi)
+│   │       ├── OpenSkyService.kt  #   OpenSky auth token + flight tracks
+│   │       ├── RouteService.kt    #   Route / airport resolution
+│   │       ├── MetarService.kt    #   METAR weather
+│   │       └── HttpService.kt     #   Shared HTTP client
+│   │   └── model/                 # Data classes
+│   ├── assets/                    # WebView UI (synced from public/)
+│   │   ├── index.html
+│   │   ├── styles.css
+│   │   ├── app.js                 # Leaflet map, views, settings, i18n
+│   │   └── lang/{en,pl}.json
+│   └── res/                       # Launcher icons, splash, themes
+│
+└── public/                        # Frontend source of truth
+    ├── index.html
+    ├── styles.css
+    ├── app.js
+    └── lang/{en,pl}.json
+```
+
+The frontend lives in `public/` and is copied into `android/app/src/main/assets/` for the app build. **After editing any file in `public/`, sync it to the corresponding file under `android/app/src/main/assets/`.**
+
+## Building
+
+1. Open the `android/` folder in Android Studio.
+2. Let Gradle sync (Gradle 8.9, JDK 21+, AGP compatible).
+3. Run the `app` configuration on a device/emulator.
+
+Command line:
 
 ```bash
-# Clone repository
-git clone <repository-url>
-cd FlightRadarLocal
-
-# Install dependencies
-npm install
-
-# Start server
-npm start
+cd android
+./gradlew assembleDebug
 ```
 
-Open http://localhost:3000 in your browser.
+The APK is produced at `android/app/build/outputs/apk/debug/app-debug.apk`.
 
-## Configuration
+## Permissions
 
-### Environment Variables
+- `INTERNET` - Fetch flight data from network sources
+- `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION` - Automatic GPS positioning (used only on-device)
 
-- `PORT` - Server port (default: 3000)
+## Privacy
 
-### Settings Menu
-
-Access via gear icon in top-right corner:
-
-- **Language** - English or Polish
-- **Units** - Metric (km/h, meters) or Imperial (knots, feet)
-- **Radius** - Tracking radius 10-250 NM
-- **Refresh Rate** - Data update interval (5-30 seconds)
-- **Night Mode** - Reduced brightness theme
-- **Color Theme** - 7 available themes
-- **Screensaver Timeout** - Idle time before screensaver (0=off, 1-10 min)
-- **Local Receiver** - Enable/disable local ADS-B receiver
-- **Receiver URL** - Local receiver address (e.g., http://192.168.1.100)
-- **FlightAware API Key** - Optional key for enhanced flight data
-- **Location Mode** - Auto (GPS) or Manual with city search
-
-## Project Structure
-
-```
-FlightRadarLocal/
-├── server.js          # Express backend with ADS-B API proxy
-├── package.json       # Node.js configuration
-├── .gitignore         # Git ignore rules
-├── README.md          # This file
-├── req.txt            # Original requirements
-└── public/
-    ├── index.html     # Main HTML with all views
-    ├── styles.css     # CSS with 7 themes and night mode
-    ├── app.js         # Frontend JavaScript application
-    └── lang/
-        ├── en.json    # English translations
-        └── pl.json    # Polish translations
-```
-
-## API Endpoints
-
-- `GET /api/flights?lat={lat}&lon={lon}&radius={nm}` - Flights in area
-- `GET /api/flights/:hex` - Specific aircraft details
-- `GET /api/routes/:hex` - Flight route information
-- `GET /api/source` - Current active data source
-- `GET /api/health` - System health check
-
-## Browser Support
-
-- Chrome/Edge (latest)
-- Firefox (latest)
-- Safari (latest)
-- Mobile browsers with geolocation support
+Your location is used only on your device to find aircraft near you. It is never stored or shared with third parties. See [PRIVACY_POLICY.md](PRIVACY_POLICY.md) for details.
 
 ## License
 
