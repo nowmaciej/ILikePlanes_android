@@ -45,17 +45,26 @@ class MainActivity : AppCompatActivity() {
     private var deviceHeading = 0f
     private val rotationMatrix = FloatArray(9)
     private val orientationAngles = FloatArray(3)
+    private var hasGpsFix = false
+    private var locationSignalLost = false
+    private var locationWatchdogTimer: Runnable? = null
 
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
             val location = locationResult.lastLocation ?: return
+            val firstFix = !hasGpsFix
             val moved = currentLocation?.distanceTo(location) ?: Float.MAX_VALUE
             if (moved > 30f || currentLocation == null) {
                 currentLocation = location
                 saveLastLocation()
                 injectLocationState()
             }
-            hideLocationLoading()
+            if (firstFix || locationSignalLost) {
+                hasGpsFix = true
+                locationSignalLost = false
+                showLocationOk()
+            }
+            scheduleLocationWatchdog()
         }
     }
 
@@ -287,10 +296,10 @@ class MainActivity : AppCompatActivity() {
                 saveLastLocation()
                 injectLocationState()
             }
-            hideLocationLoading()
+            scheduleLocationWatchdog()
         }
         fusedLocationClient.lastLocation.addOnFailureListener {
-            hideLocationLoading()
+            scheduleLocationWatchdog()
         }
         requestLocationUpdates()
     }
@@ -317,7 +326,7 @@ class MainActivity : AppCompatActivity() {
         if (currentLocation != null) {
             webView.evaluateJavascript("window.state && window.state.position != null") { hasPosition ->
                 if (hasPosition != "true") injectLocationState()
-                hideLocationLoading()
+                clearLocationLoading()
             }
         }
 
@@ -358,13 +367,28 @@ class MainActivity : AppCompatActivity() {
         webView.evaluateJavascript("try { window.updateLocationStatus('waiting'); } catch(e) {}", null)
     }
 
-    private fun hideLocationLoading() {
+    private fun showLocationOk() {
         webView.evaluateJavascript("try { window.updateLocationStatus('ok', 3000); } catch(e) {}", null)
         webView.postDelayed({ webView.evaluateJavascript("try { window.updateLocationStatus('clear'); } catch(e) {}", null) }, 3500)
     }
 
+    private fun clearLocationLoading() {
+        webView.evaluateJavascript("try { window.updateLocationStatus('clear'); } catch(e) {}", null)
+    }
+
+    private fun scheduleLocationWatchdog() {
+        locationWatchdogTimer?.let { webView.removeCallbacks(it) }
+        val runnable = Runnable {
+            locationSignalLost = true
+            showLocationLoading()
+        }
+        locationWatchdogTimer = runnable
+        webView.postDelayed(runnable, 30000)
+    }
+
     override fun onDestroy() {
         fusedLocationClient.removeLocationUpdates(locationCallback)
+        locationWatchdogTimer?.let { webView.removeCallbacks(it) }
         apiBridge.destroy()
         super.onDestroy()
     }

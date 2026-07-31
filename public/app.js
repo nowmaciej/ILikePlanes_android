@@ -287,6 +287,7 @@ function updateLocationStatus(type, duration=3000) {
 }
 
 let deviceCompassTimer = null;
+let jsLocationAcquired = false;
 function startDeviceCompass() {
   if (deviceCompassTimer) return;
   deviceCompassTimer = setInterval(() => {
@@ -677,7 +678,6 @@ function applyNativePosition(lat, lon) {
   state.position = { lat, lon };
   updateLocationDisplay();
   updateCompassVisibility();
-  updateLocationStatus('ok', 3000);
   if (state.map) {
     if (state.myLocationMarker) state.myLocationMarker.setLatLng([lat, lon]);
     else createMyLocationMarker();
@@ -1962,7 +1962,10 @@ function initGeolocation() {
         console.log(`Location: ${state.position.lat}, ${state.position.lon}`);
         updateLocationDisplay();
         updateCompassVisibility();
-        updateLocationStatus('ok', 3000);
+        if (!jsLocationAcquired) {
+          jsLocationAcquired = true;
+          updateLocationStatus('ok', 3000);
+        }
         if (state.map) {
           state.map.panTo([state.position.lat, state.position.lon]);
           if (state.myLocationMarker) state.myLocationMarker.setLatLng([state.position.lat, state.position.lon]);
