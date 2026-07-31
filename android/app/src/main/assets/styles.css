@@ -422,6 +422,14 @@ body {
 .opensky-credits-tier {
   font-size:11px; color:var(--fg3); margin-top:4px; font-style:italic;
 }
+.opensky-credits-row.opensky-credits-error {
+  cursor:pointer; padding:6px 8px; border-radius:var(--radius-sm);
+  background:var(--danger-bg, rgba(239,68,68,0.08));
+  border:1px solid var(--danger);
+}
+.opensky-credits-row.opensky-credits-error .opensky-credits-label {
+  color:var(--danger); text-transform:none; letter-spacing:normal; font-size:11px;
+}
 
 /* ===== CREDITS ===== */
 .credits-list { display:flex; flex-direction:column; gap:6px; }

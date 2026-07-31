@@ -151,6 +151,8 @@
     "openskyRouteData": "OpenSky Route Data",
     "openskyGetKey": "Get API key",
     "apiCredits": "API Credits",
+    "apiError": "OpenSky API connection failed",
+    "apiErrorClick": "Tap to see error code",
     "hideSurface": "Hide Surface",
     "seconds": "seconds",
     "minutes": "minutes",

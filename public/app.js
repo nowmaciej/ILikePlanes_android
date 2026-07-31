@@ -37,6 +37,7 @@ const state = {
   openskyClientSecret: '',
   openskyRouteData: false,
   openskyCreditsRemaining: null,
+  openskyError: null,
   radarRouteLayer: null,
   position: null,
   locationMode: 'auto',
@@ -343,6 +344,7 @@ function applyLanguage(lang) {
     const val = t(key);
     if (val) el.title = val;
   });
+  displayCachedCredits();
 }
 
 function loadSettings() {
@@ -409,10 +411,29 @@ function updateOpenSkyRouteDisabled() {
 async function fetchOpenSkyCredits() {}
 
 function displayCachedCredits() {
-  const rem = state.openskyCreditsRemaining;
+  const rowEl = document.getElementById('opensky-credits-row');
+  const labelEl = document.getElementById('opensky-credits-label');
   const remainingEl = document.getElementById('opensky-credits-remaining');
   const barEl = document.getElementById('opensky-credits-bar-fill');
   const tierEl = document.getElementById('opensky-credits-tier');
+  if (!labelEl || !remainingEl || !barEl || !tierEl) return;
+
+  if (state.openskyError) {
+    labelEl.textContent = t('settings.apiError');
+    remainingEl.textContent = t('settings.apiErrorClick');
+    remainingEl.style.color = 'var(--danger)';
+    barEl.style.width = '0%';
+    tierEl.textContent = '';
+    rowEl.classList.add('opensky-credits-error');
+    rowEl.onclick = () => { remainingEl.textContent = state.openskyError; };
+    return;
+  }
+
+  rowEl.classList.remove('opensky-credits-error');
+  rowEl.onclick = null;
+  labelEl.textContent = t('settings.apiCredits');
+  remainingEl.style.color = '';
+  const rem = state.openskyCreditsRemaining;
   if (rem == null) { remainingEl.textContent = '---'; barEl.style.width = '0%'; tierEl.textContent = ''; return; }
   let limit = 400;
   if (rem >= 10000) limit = 14400;
@@ -1247,7 +1268,14 @@ async function updateRadarRoute() {
   try {
     const openskyUrl = `/api/opensky-track/${f.hex}?client_id=${encodeURIComponent(state.openskyClientId)}&client_secret=${encodeURIComponent(state.openskyClientSecret)}`;
     const data = await fetchJSON(openskyUrl);
+    if (data.error) {
+      state.openskyError = data.error;
+      displayCachedCredits();
+      return;
+    }
+    state.openskyError = null;
     if (data.creditsRemaining != null) state.openskyCreditsRemaining = parseInt(data.creditsRemaining);
+    displayCachedCredits();
     if (state.selectedFlight?.hex !== f.hex || state.currentView !== 'radar') return;
     if (data?.trail?.length >= 2) {
       const coords = data.trail.map(p => [p.lat, p.lon]);
@@ -1256,7 +1284,10 @@ async function updateRadarRoute() {
         weight: 3, opacity: 0.85
       }).addTo(layer);
     }
-  } catch (e) {}
+  } catch (e) {
+    state.openskyError = e.message || 'network_error';
+    displayCachedCredits();
+  }
 }
 
 function predictFlyover(f) {
@@ -1794,8 +1825,16 @@ function initNavigation() {
   updateSortIndicators();
 
   document.getElementById('btn-settings').addEventListener('click', () => {
-    document.getElementById('view-details').classList.remove('active');
-    document.getElementById('details-backdrop').classList.remove('active');
+    if (document.getElementById('view-details').classList.contains('active')) {
+      document.getElementById('view-details').classList.remove('active');
+      document.getElementById('details-backdrop').classList.remove('active');
+      const prev = state._prevView || 'list';
+      document.getElementById(`view-${prev}`).classList.add('active');
+      state.currentView = prev;
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === prev));
+      if (prev === 'radar') { updateRadarMap(); state.map?.invalidateSize(); }
+      if (prev === 'list') renderFlightList();
+    }
     document.getElementById('settings-overlay').classList.remove('hidden');
     if (state.openskyClientId.trim() && state.openskyClientSecret.trim()) displayCachedCredits();
   });

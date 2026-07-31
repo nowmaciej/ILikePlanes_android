@@ -191,7 +191,7 @@ class ApiBridge(private val webView: WebView) {
         val clientId = params["client_id"] ?: ""
         val clientSecret = params["client_secret"] ?: ""
         val token = OpenSkyService.getToken(clientId, clientSecret)
-        if (token == null) return jsonResponse(mapOf("trail" to org.json.JSONArray(), "error" to "no_token"))
+        if (token == null) return jsonResponse(mapOf("trail" to org.json.JSONArray(), "error" to (OpenSkyService.getLastError() ?: "no_token")))
         val result = OpenSkyService.fetchTrack(hex, token)
 
         val trailArr = org.json.JSONArray()

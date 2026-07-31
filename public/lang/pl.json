@@ -151,6 +151,8 @@
     "openskyRouteData": "Dane Tras OpenSky",
     "openskyGetKey": "Zdobądź klucz",
     "apiCredits": "Kredyty API",
+    "apiError": "Połączenie z API OpenSky nieudane",
+    "apiErrorClick": "Kliknij, aby zobaczyć kod błędu",
     "hideSurface": "Ukryj Pojazdy Naziemne",
     "seconds": "sekund",
     "minutes": "minut",

@@ -16,9 +16,15 @@ object OpenSkyService {
     private var cachedToken: String? = null
     private var tokenExpiry: Long = 0
     private var tokenClientId: String = ""
+    private var lastError: String? = null
+
+    fun getLastError(): String? = lastError
 
     suspend fun getToken(clientId: String, clientSecret: String): String? = withContext(Dispatchers.IO) {
-        if (clientId.isBlank() || clientSecret.isBlank()) return@withContext null
+        if (clientId.isBlank() || clientSecret.isBlank()) {
+            lastError = "missing_credentials"
+            return@withContext null
+        }
         if (cachedToken != null && tokenClientId == clientId && System.currentTimeMillis() < tokenExpiry - 60000) {
             return@withContext cachedToken
         }
@@ -42,9 +48,13 @@ object OpenSkyService {
                 cachedToken = json.getString("access_token")
                 tokenExpiry = System.currentTimeMillis() + (json.optInt("expires_in", 1800) * 1000L)
                 tokenClientId = clientId
+                lastError = null
                 return@withContext cachedToken
             }
-        } catch (_: Exception) {}
+            lastError = "auth HTTP $status"
+        } catch (e: Exception) {
+            lastError = e.message ?: "auth_error"
+        }
 
         cachedToken = null
         return@withContext null
@@ -66,6 +76,7 @@ object OpenSkyService {
                 val body = BufferedReader(InputStreamReader(conn.inputStream)).readText()
                 val json = org.json.JSONObject(body)
                 conn.disconnect()
+                lastError = null
 
                 if (!json.has("path")) return OpenSkyTrack(creditsRemaining = creditsRemaining)
 
@@ -90,8 +101,11 @@ object OpenSkyService {
                 return OpenSkyTrack(trail = trail, creditsRemaining = creditsRemaining)
             }
             conn.disconnect()
-        } catch (_: Exception) {}
+            lastError = "HTTP $status"
+        } catch (e: Exception) {
+            lastError = e.message ?: "network_error"
+        }
 
-        return OpenSkyTrack()
+        return OpenSkyTrack(error = lastError)
     }
 }
