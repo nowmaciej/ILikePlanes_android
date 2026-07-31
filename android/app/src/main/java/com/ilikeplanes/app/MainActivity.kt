@@ -12,6 +12,7 @@ import android.location.Location
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Looper
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -27,7 +28,11 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.webkit.WebViewAssetLoader
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 
 class MainActivity : AppCompatActivity() {
 
@@ -40,6 +45,19 @@ class MainActivity : AppCompatActivity() {
     private var deviceHeading = 0f
     private val rotationMatrix = FloatArray(9)
     private val orientationAngles = FloatArray(3)
+
+    private val locationCallback = object : LocationCallback() {
+        override fun onLocationResult(locationResult: LocationResult) {
+            val location = locationResult.lastLocation ?: return
+            val moved = currentLocation?.distanceTo(location) ?: Float.MAX_VALUE
+            if (moved > 30f || currentLocation == null) {
+                currentLocation = location
+                saveLastLocation()
+                injectLocationState()
+            }
+            hideLocationLoading()
+        }
+    }
 
     private val sensorListener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent) {
@@ -274,21 +292,25 @@ class MainActivity : AppCompatActivity() {
         fusedLocationClient.lastLocation.addOnFailureListener {
             hideLocationLoading()
         }
+        requestLocationUpdates()
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun requestLocationUpdates() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return
+        }
+        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
+            .setMinUpdateIntervalMillis(3000)
+            .build()
+        fusedLocationClient.requestLocationUpdates(request, locationCallback, Looper.getMainLooper())
     }
 
     private fun injectLocationState() {
         val lat = currentLocation?.latitude ?: 52.2297
         val lon = currentLocation?.longitude ?: 21.0122
-        webView.evaluateJavascript("""
-            (function() {
-                try {
-                    if (window.state) {
-                    window.state.position = { lat: $lat, lon: $lon };
-                    if (typeof window.fetchFlights === 'function') window.fetchFlights();
-                    }
-                } catch(e) {}
-            })();
-        """.trimIndent(), null)
+        webView.evaluateJavascript("try { window.applyNativePosition($lat, $lon); } catch(e) {}", null)
     }
 
     private fun injectSavedLocation() {
@@ -346,6 +368,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        fusedLocationClient.removeLocationUpdates(locationCallback)
         apiBridge.destroy()
         super.onDestroy()
     }

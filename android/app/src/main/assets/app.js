@@ -609,6 +609,41 @@ function applyManualPosition(lat, lon, name) {
   fetchFlights();
 }
 
+function createMyLocationMarker() {
+  if (!state.map || !state.position || state.myLocationMarker) return;
+  state.myLocationMarker = L.marker([state.position.lat, state.position.lon], {
+    icon: L.divIcon({
+      className:'my-location-marker',
+      html:'<div style="width:12px;height:12px;background:var(--accent);border:2px solid white;border-radius:50%;box-shadow:0 0 10px var(--accent)"></div>'
+    })
+  }).addTo(state.map).bindPopup(t('radar.yourLocation'));
+}
+
+function createRadarCircle() {
+  if (!state.map || !state.position || state.radarCircle) return;
+  state.radarCircle = L.circle([state.position.lat, state.position.lon], {
+    radius: state.radius * NM_TO_KM * 1000,
+    color: THEME_COLORS[state.theme] || '#3b82f6',
+    fillColor: THEME_COLORS[state.theme] || '#3b82f6',
+    fillOpacity: 0.03,
+    weight: 1, dashArray: '6,4'
+  }).addTo(state.map);
+}
+
+function applyNativePosition(lat, lon) {
+  state.position = { lat, lon };
+  updateLocationDisplay();
+  updateCompassVisibility();
+  updateLocationStatus('ok', 3000);
+  if (state.map) {
+    if (state.myLocationMarker) state.myLocationMarker.setLatLng([lat, lon]);
+    else createMyLocationMarker();
+    if (state.radarCircle) state.radarCircle.setLatLng([lat, lon]);
+    else createRadarCircle();
+  }
+  fetchFlights();
+}
+
 function updateLocationDisplay() {
   const display = document.getElementById('current-location-display');
   if (!display) return;
@@ -1406,26 +1441,9 @@ function initRadarMap() {
 
   L.control.zoom({ position: 'topright' }).addTo(state.map);
 
-  if (state.position) {
-    state.myLocationMarker = L.marker([state.position.lat, state.position.lon], {
-      icon: L.divIcon({
-        className:'my-location-marker',
-        html:'<div style="width:12px;height:12px;background:var(--accent);border:2px solid white;border-radius:50%;box-shadow:0 0 10px var(--accent)"></div>'
-      })
-    }).addTo(state.map).bindPopup(t('radar.yourLocation'));
-  }
-
+  createMyLocationMarker();
   state.layerAirports = L.layerGroup().addTo(state.map);
-
-  if (state.position) {
-    state.radarCircle = L.circle([state.position.lat, state.position.lon], {
-      radius: state.radius * NM_TO_KM * 1000,
-      color: THEME_COLORS[state.theme] || '#3b82f6',
-      fillColor: THEME_COLORS[state.theme] || '#3b82f6',
-      fillOpacity: 0.03,
-      weight: 1, dashArray: '6,4'
-    }).addTo(state.map);
-  }
+  createRadarCircle();
 
   state.layerPlanes = L.layerGroup().addTo(state.map);
   state.layerTrails = L.layerGroup().addTo(state.map);
@@ -1945,18 +1963,25 @@ function initGeolocation() {
       pos => {
         state.position = { lat: pos.coords.latitude, lon: pos.coords.longitude };
         console.log(`Location: ${state.position.lat}, ${state.position.lon}`);
+        updateLocationDisplay();
         updateCompassVisibility();
         updateLocationStatus('ok', 3000);
         if (state.map) {
           state.map.panTo([state.position.lat, state.position.lon]);
           if (state.myLocationMarker) state.myLocationMarker.setLatLng([state.position.lat, state.position.lon]);
+          else createMyLocationMarker();
+          if (state.radarCircle) state.radarCircle.setLatLng([state.position.lat, state.position.lon]);
+          else createRadarCircle();
         }
         fetchFlights();
       },
       err => {
         console.warn('Geolocation error:', err.message);
-        state.position = { lat: 50.0, lon: 14.4 }; // Prague fallback
-        if (state.locationMode === 'auto') updateLocationStatus('waiting');
+        if (!state.position) {
+          state.position = { lat: 50.0, lon: 14.4 }; // Prague fallback
+          updateLocationDisplay();
+          fetchFlights();
+        }
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );

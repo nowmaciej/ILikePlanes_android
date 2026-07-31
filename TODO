@@ -1,5 +1,1 @@
-- Przy uruchomieniu aplikacji wyrzucany jest odrazu komunikat o braku połączenia GPS. Zamień go na "Oczekiwanie na sygnał GPS.." jeżeli jest wybrana opcja Tryb lokalizacji: Automatyczna.
-- Jeżeli jest wybrana opcja Tryb Lokalizacji Ręczna - Pokazuj po uruchomieniu komunikat "Tryb lokalizacji: Manualny" zamiast "Oczekiwanie na sygnał GPS.."
-- Po nawiązaniu połączenia wyświetl komunikat "Sygnał GPS - OK"
-- Używaj ostatnio zapamiętanej lokalizacji na czas nawiązania połączenia z GPS lub Warszawa jeżeli nie ma zapisanej ostatniej.
-- Sprawdź dlaczego przy automatycznej lokalizacji i pobraniu danych GPS nie wyświetla się kompas.
+- Napisy informujące o szukaniu GPS, trybie manualnym powinny wyświetlać się przez 3 sekundy i znikać.
