@@ -1974,17 +1974,11 @@ function initGeolocation() {
       },
       err => {
         console.warn('Geolocation error:', err.message);
-        if (!state.position) {
-          state.position = { lat: 50.0, lon: 14.4 }; // Prague fallback
-          updateLocationDisplay();
-          fetchFlights();
-        }
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );
   } else {
-    state.position = { lat: 50.0, lon: 14.4 };
-    fetchFlights();
+    console.warn('Geolocation API not available; waiting for native location');
   }
 }
 
@@ -2043,5 +2037,7 @@ window.t = t;
 window.handleBack = handleBack;
 window.state = state;
 window.fetchFlights = fetchFlights;
+window.applyNativePosition = applyNativePosition;
+window.updateLocationStatus = updateLocationStatus;
 
 })();

@@ -314,15 +314,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun injectSavedLocation() {
-        if (currentLocation == null) {
-            currentLocation = Location("").apply {
-                latitude = 52.2297
-                longitude = 21.0122
+        if (currentLocation != null) {
+            webView.evaluateJavascript("window.state && window.state.position != null") { hasPosition ->
+                if (hasPosition != "true") injectLocationState()
+                hideLocationLoading()
             }
-        }
-        webView.evaluateJavascript("window.state && window.state.position != null") { hasPosition ->
-            if (hasPosition != "true") injectLocationState()
-            hideLocationLoading()
         }
 
         val insetTop = run {
