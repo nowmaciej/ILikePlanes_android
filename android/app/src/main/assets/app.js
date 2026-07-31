@@ -230,9 +230,31 @@ function updateClock() {
   if (el) el.textContent = now.toLocaleTimeString(state.lang === 'pl' ? 'pl-PL' : 'en-GB', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
 }
 
+let compassLastHeading = null;
 function updateCompass(heading) {
-  const needle = document.getElementById('compass-needle');
-  if (needle && heading != null) needle.style.transform = `translate(-50%,-100%) rotate(${heading}deg)`;
+  const dial = document.getElementById('compass-dial');
+  if (!dial || heading == null) return;
+  if (compassLastHeading == null) {
+    compassLastHeading = heading;
+  } else {
+    let diff = heading - compassLastHeading;
+    while (diff > 180) diff -= 360;
+    while (diff < -180) diff += 360;
+    compassLastHeading += diff;
+  }
+  dial.style.transform = `rotate(${-compassLastHeading}deg)`;
+}
+
+function buildCompassTicks() {
+  const dial = document.getElementById('compass-dial');
+  if (!dial || dial.querySelector('.compass-tick')) return;
+  for (let i = 0; i < 360; i += 30) {
+    if (i % 90 === 0) continue;
+    const tick = document.createElement('div');
+    tick.className = 'compass-tick' + (i % 90 === 30 || i % 90 === 60 ? ' major' : '');
+    tick.style.transform = `rotate(${i}deg)`;
+    dial.appendChild(tick);
+  }
 }
 
 function updateCompassVisibility() {
@@ -1944,6 +1966,7 @@ async function init() {
   await loadTranslations();
   initSettings();
   updateLocationStatus('waiting');
+  buildCompassTicks();
   initNavigation();
   updateClock();
   setInterval(updateClock, 1000);
