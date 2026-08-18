@@ -93,7 +93,7 @@ object OpenSkyService {
                             lon = lon,
                             alt = if (wp.length() > 3 && !wp.isNull(3)) Math.round(wp.getDouble(3) * 3.28084).toInt() else null,
                             track = if (wp.length() > 4 && !wp.isNull(4)) wp.getDouble(4) else null,
-                            onGround = if (wp.length() > 5 && !wp.isNull(5)) wp.getInt(5) == 1 else null,
+                            onGround = if (wp.length() > 5 && !wp.isNull(5)) wp.getBoolean(5) else null,
                             ts = (wp.optLong(0, 0L) * 1000)
                         )
                     )

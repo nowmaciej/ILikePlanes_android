@@ -1,0 +1,2 @@
+1. BŁĄD: w konfiguracja / źródła danych / OpenSky network po wpisaniu danych do api pojawia się błąd "Value false at 5 of type java.lang.Boolean cannot be converted to int"
+2. Kompas na górnej belce pokazuje odwrotne kierunki. Odwrócone są zarówno N/S jak W/E

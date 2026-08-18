@@ -243,7 +243,7 @@ function updateCompass(heading) {
     while (diff < -180) diff += 360;
     compassLastHeading += diff;
   }
-  dial.style.transform = `rotate(${-compassLastHeading}deg)`;
+  dial.style.transform = `rotate(${compassLastHeading}deg)`;
 }
 
 function buildCompassTicks() {
