@@ -6,6 +6,7 @@ const KM_TO_MI = 0.621371;
 const FT_TO_M = 0.3048;
 const KTS_TO_KMH = 1.852;
 const KTS_TO_MPH = 1.15078;
+const INHG_TO_HPA = 33.8639;
 const EARTH_R_KM = 6371;
 const MAX_TRACKED = 80;
 const MAX_DISPLAYED = 40;
@@ -1663,6 +1664,7 @@ function parseMETARDescription(raw) {
   if (!raw) return `<span class="asb-metar-none">${t('weather.notAvailable')}</span>`;
   const lines = [];
   const parts = raw.replace(/^METAR\s+/i, '').split(/\s+/);
+  const metric = state.units === 'metric';
 
   for (let i = 0; i < parts.length; i++) {
     const p = parts[i];
@@ -1674,9 +1676,12 @@ function parseMETARDescription(raw) {
     if (/^(VRB|\d{3})(\d{2})(G\d{2})?(KT|MPS|KMH)$/.test(p)) {
       const m = p.match(/^(VRB|\d{3})(\d{2})(G\d{2})?(KT|MPS|KMH)$/);
       const dir = m[1] === 'VRB' ? t('metar.variable') : `${m[1]}\u00B0`;
-      const spd = parseInt(m[2]);
-      const gust = m[3] ? parseInt(m[3].slice(1)) : null;
-      const unit = m[4] === 'KT' ? 'kt' : (m[4] === 'MPS' ? 'm/s' : 'km/h');
+      let spd = parseInt(m[2]);
+      let gust = m[3] ? parseInt(m[3].slice(1)) : null;
+      let unit = 'kt';
+      if (metric && m[4] === 'KT') { spd = Math.round(spd * KTS_TO_KMH); gust = gust ? Math.round(gust * KTS_TO_KMH) : null; unit = 'km/h'; }
+      else if (m[4] === 'MPS') unit = 'm/s';
+      else if (m[4] === 'KMH') unit = 'km/h';
       let wind = `${t('metar.wind')} ${t('metar.from')} ${dir} ${t('metar.at')} ${spd} ${unit}`;
       if (gust) wind += `, ${t('metar.gusts')} ${gust} ${unit}`;
       lines.push(wind);
@@ -1705,8 +1710,10 @@ function parseMETARDescription(raw) {
       const m = p.match(/^(FEW|SCT|BKN|OVC|VV)(\d{3})(CB|TCU)?$/);
       const coverMap = { FEW: t('metar.few'), SCT: t('metar.scattered'), BKN: t('metar.broken'), OVC: t('metar.overcast'), VV: t('metar.verticalVisibility') };
       let cover = coverMap[m[1]] || m[1];
-      const height = parseInt(m[2]) * 100;
-      let cloud = `${cover} ${t('metar.at')} ${height} ${t('metar.feet')}`;
+      const heightFt = parseInt(m[2]) * 100;
+      const heightVal = metric ? Math.round(heightFt * FT_TO_M) : heightFt;
+      const heightUnit = metric ? 'm' : t('metar.feet');
+      let cloud = `${cover} ${t('metar.at')} ${heightVal} ${heightUnit}`;
       if (m[3] === 'CB') cloud += ` (${t('metar.cb')})`;
       else if (m[3] === 'TCU') cloud += ` (${t('metar.tcu')})`;
       lines.push(cloud);
@@ -1731,7 +1738,12 @@ function parseMETARDescription(raw) {
     }
     if (/^A(\d{4})$/.test(p)) {
       const m = p.match(/^A(\d{4})$/);
-      lines.push(`${t('metar.pressure')}: ${m[1]} inHg`);
+      if (metric) {
+        const hpa = Math.round(parseInt(m[1]) / 100 * INHG_TO_HPA);
+        lines.push(`${t('metar.pressure')}: ${hpa} ${t('metar.hpa')}`);
+      } else {
+        lines.push(`${t('metar.pressure')}: ${m[1]} inHg`);
+      }
       continue;
     }
   }
