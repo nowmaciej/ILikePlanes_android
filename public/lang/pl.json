@@ -228,7 +228,7 @@
   },
   "metar": {
     "from": "Kierunek wiatru",
-    "at": "prędkość",
+    "at": ":",
     "variable": "zmienny",
     "gusts": "porywy",
     "cavok": "Niebo bezchmurne, widoczność dobra",
