@@ -6,7 +6,7 @@ const ADSB_SOURCES = [
   { name: 'adsb.fi', url: 'https://opendata.adsb.fi/api/v3', endpoint: '/lat/{lat}/lon/{lon}/dist/{dist}', priority: 3 }
 ];
 
-let activeSource = ADSB_SOURCES[0];
+let activeSource = null;
 
 function normalizeAircraft(a) {
   return {
@@ -57,21 +57,34 @@ async function queryADSB(endpointOrParams) {
   const sorted = [...ADSB_SOURCES].sort((a, b) => a.priority - b.priority);
   const errors = [];
 
-  for (const source of sorted) {
+  const trySource = async (source) => {
+    let fullUrl;
+    if (typeof endpointOrParams === 'string') {
+      fullUrl = `${source.url}${endpointOrParams}`;
+    } else {
+      const ep = source.endpoint || '/lat/{lat}/lon/{lon}/dist/{dist}';
+      fullUrl = `${source.url}${buildEndpoint(ep, endpointOrParams)}`;
+    }
+    const data = await fetchUrl(fullUrl);
+    return normalizeResponse(data);
+  };
+
+  if (activeSource) {
     try {
-      let fullUrl;
-      if (typeof endpointOrParams === 'string') {
-        fullUrl = `${source.url}${endpointOrParams}`;
-      } else {
-        const ep = source.endpoint || '/lat/{lat}/lon/{lon}/dist/{dist}';
-        fullUrl = `${source.url}${buildEndpoint(ep, endpointOrParams)}`;
-      }
-      const data = await fetchUrl(fullUrl);
-      const normalized = normalizeResponse(data);
-      if (source.name !== activeSource.name) {
-        activeSource = source;
-        console.log(`[failover] Switched to ${source.name}`);
-      }
+      const normalized = await trySource(activeSource);
+      return { data: normalized, source: activeSource.name };
+    } catch (err) {
+      errors.push({ source: activeSource.name, error: err.message });
+      console.log(`[failover] ${activeSource.name} failed: ${err.message}`);
+    }
+  }
+
+  for (const source of sorted) {
+    if (activeSource && source.name === activeSource.name) continue;
+    try {
+      const normalized = await trySource(source);
+      activeSource = source;
+      console.log(`[failover] Switched to ${source.name}`);
       return { data: normalized, source: source.name };
     } catch (err) {
       errors.push({ source: source.name, error: err.message });
