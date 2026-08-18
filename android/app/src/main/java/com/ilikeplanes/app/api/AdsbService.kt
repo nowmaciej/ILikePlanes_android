@@ -110,8 +110,8 @@ object AdsbService {
                 else if (obj.has("heading")) obj.optDouble("heading", Double.NaN).let { if (it.isNaN()) null else it } else null,
             baroRate = if (obj.has("baro_rate")) obj.optInt("baro_rate", Int.MAX_VALUE).let { if (it == Int.MAX_VALUE) null else it }
                 else if (obj.has("vertical_rate")) obj.optInt("vertical_rate", Int.MAX_VALUE).let { if (it == Int.MAX_VALUE) null else it } else null,
-            squawk = obj.optString("squawk", null),
-            category = obj.optString("category", null),
+            squawk = if (obj.has("squawk") && !obj.isNull("squawk")) obj.getString("squawk") else null,
+            category = if (obj.has("category") && !obj.isNull("category")) obj.getString("category") else null,
             r = obj.optString("r", "") + obj.optString("registration", ""),
             t = obj.optString("t", "") + obj.optString("type", ""),
             ownOp = obj.optString("ownOp", "") + obj.optString("airline", ""),
