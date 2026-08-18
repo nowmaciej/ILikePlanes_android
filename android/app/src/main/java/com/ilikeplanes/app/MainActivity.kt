@@ -176,11 +176,13 @@ class MainActivity : AppCompatActivity() {
             ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
                 val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
                 webView.setPadding(bars.left, bars.top, bars.right, bars.bottom)
-                if (bars.top > 0) {
-                    webView.evaluateJavascript(
-                        "document.documentElement.style.setProperty('--safe-top','${bars.top}px')", null
-                    )
+                val js = buildString {
+                    append("(function(){try{")
+                    if (bars.top > 0) append("document.documentElement.style.setProperty('--safe-top','${bars.top}px');")
+                    if (bars.bottom > 0) append("document.documentElement.style.setProperty('--safe-bottom','${bars.bottom}px');")
+                    append("}catch(e){}})()")
                 }
+                webView.evaluateJavascript(js, null)
                 insets
             }
         }
@@ -334,10 +336,17 @@ class MainActivity : AppCompatActivity() {
             val insets = WindowInsetsCompat.toWindowInsetsCompat(window.decorView.rootWindowInsets, window.decorView)
             insets.getInsets(WindowInsetsCompat.Type.systemBars()).top
         }
-        if (insetTop > 0) {
+        val insetBottom = run {
+            val insets = WindowInsetsCompat.toWindowInsetsCompat(window.decorView.rootWindowInsets, window.decorView)
+            insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
+        }
+        if (insetTop > 0 || insetBottom > 0) {
             webView.evaluateJavascript("""
                 (function() {
-                    try { document.documentElement.style.setProperty('--safe-top', '${insetTop}px'); } catch(e) {}
+                    try {
+                        ${if (insetTop > 0) "document.documentElement.style.setProperty('--safe-top', '${insetTop}px');" else ""}
+                        ${if (insetBottom > 0) "document.documentElement.style.setProperty('--safe-bottom', '${insetBottom}px');" else ""}
+                    } catch(e) {}
                 })();
             """.trimIndent(), null)
         }

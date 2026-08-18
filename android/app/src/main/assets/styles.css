@@ -81,6 +81,7 @@ body {
 #app {
   display:flex; flex-direction:column; height:100%; box-sizing:border-box;
   padding-top: env(safe-area-inset-top, var(--safe-top, 0px));
+  padding-bottom: env(safe-area-inset-bottom, var(--safe-bottom, 0px));
 }
 
 /* ===== TOP BAR ===== */
@@ -582,7 +583,8 @@ html.portrait #details-handle {
   background:var(--border2); margin:8px auto; flex-shrink:0;
 }
 html.portrait #view-details {
-  position:fixed; top:66.66vh; left:0; right:0; bottom:0;
+  position:fixed; top:66.66vh; left:0; right:0;
+  bottom: env(safe-area-inset-bottom, var(--safe-bottom, 0px));
   z-index:999;
   background:var(--bg2); border-radius:16px 16px 0 0;
   box-shadow:0 -4px 24px rgba(0,0,0,0.5);
