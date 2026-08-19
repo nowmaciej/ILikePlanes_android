@@ -1044,6 +1044,14 @@ function selectFlight(f) {
     showRadarSidebar(f);
     highlightRadarMarker(prevHex, f.hex);
     updateRadarRoute();
+    state.layerTrails?.clearLayers();
+    const trail = state.radarTrails[f.hex];
+    if (trail && trail.length >= 2) {
+      L.polyline(trail, {
+        color: THEME_COLORS[state.theme] || '#3b82f6',
+        weight: 3, opacity: 0.7
+      }).addTo(state.layerTrails);
+    }
   }
   centerMapOnFlight(f);
 
