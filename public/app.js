@@ -20,6 +20,7 @@ const THEME_COLORS = {
 
 const AIRLINE_LOGO_CACHE = {};
 const AIRLINE_ICAO_MAP = {};
+const SVG_ICON_CACHE = {};
 
 const state = {
   lang: 'en',
@@ -76,14 +77,32 @@ let t = (key) => {
   return v || '';
 };
 
+function getCssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+function applySvgColor(svgText, color) {
+  if (!svgText) return '';
+  return svgText.replace(/currentColor/g, color);
+}
+async function preloadSvgIcons() {
+  const icons = ['balloon','drop_plane','glider','heavy_wide_body_airliner','helicopter','high_vortex','large_jet','lighter_than_air','medium_aircraft','military_fighter_jet','parachutist','seaplane','small_light_aircraft','surface_ground_vehicle','tilt_rotor','ultralight'];
+  await Promise.all(icons.map(async name => {
+    try {
+      const res = await fetch(`map_planes_icons/${name}.svg`);
+      SVG_ICON_CACHE[name] = await res.text();
+    } catch(e) {}
+  }));
+}
+
 function createPlaneIcon(f, selected) {
   const iconId = getCategoryIcon(f.category);
-  const color = selected ? 'var(--danger)' : 'var(--accent)';
   const size = selected ? 33 : 24;
   const rotate = NON_ROTATING_ICONS.has(iconId) ? 0 : (f.track || 0);
+  const color = selected ? getCssVar('--danger') : getCssVar('--accent');
+  const svg = applySvgColor(SVG_ICON_CACHE[iconId], color);
   return L.divIcon({
     className: `radar-plane${selected ? ' radar-plane-selected' : ''}`,
-    html: `<img src="map_planes_icons/${iconId}.svg" width="${size}" height="${size}" style="transform:rotate(${rotate}deg);transition:transform .5s;${selected ? 'filter:drop-shadow(0 0 6px var(--danger));' : ''}">`,
+    html: svg ? `<div style="transform:rotate(${rotate}deg);transition:transform .5s;width:${size}px;height:${size}px;">${svg}</div>` : `<img src="map_planes_icons/${iconId}.svg" style="transform:rotate(${rotate}deg);transition:transform .5s;width:${size}px;height:${size}px;">`,
     iconSize: [size, size],
     iconAnchor: [size/2, size/2]
   });
@@ -1455,9 +1474,11 @@ function initDetailRouteMap(f) {
     if (f.lat && f.lon) {
       const iconId = getCategoryIcon(f.category);
       const rotate = NON_ROTATING_ICONS.has(iconId) ? 0 : (f.track || 0);
+      const color = getCssVar('--accent');
+      const svg = applySvgColor(SVG_ICON_CACHE[iconId], color);
       const planeIcon = L.divIcon({
         className:'plane-marker',
-        html:`<img src="map_planes_icons/${iconId}.svg" width="30" height="30" style="transform:rotate(${rotate}deg)">`
+        html: svg ? `<div style="transform:rotate(${rotate}deg);width:30px;height:30px;">${svg}</div>` : `<img src="map_planes_icons/${iconId}.svg" style="transform:rotate(${rotate}deg);width:30px;height:30px;">`
       });
       L.marker([f.lat, f.lon], { icon:planeIcon }).addTo(state.detailMap);
     }
@@ -2063,6 +2084,7 @@ async function loadTranslations() {
 
 async function init() {
   await loadTranslations();
+  preloadSvgIcons();
   initSettings();
   updateLocationStatus('waiting');
   buildCompassTicks();
