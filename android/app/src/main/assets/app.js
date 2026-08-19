@@ -47,7 +47,7 @@ const state = {
   _allFlights: [],
   _prevView: null,
   selectedFlight: null,
-  currentView: 'list',
+  currentView: 'radar',
   source: '---',
   refreshTimer: null,
   sessionStart: new Date(),
@@ -2040,6 +2040,7 @@ async function init() {
     }
   });
   document.documentElement.classList.toggle('portrait', window.innerHeight > window.innerWidth);
+  switchView(state.currentView);
 }
 
 if (document.readyState === 'loading') {

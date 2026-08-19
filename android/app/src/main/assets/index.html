@@ -38,7 +38,7 @@
     </header>
 
     <main id="main-content">
-      <div id="view-list" class="view active">
+      <div id="view-list" class="view">
         <div id="list-controls">
           <label id="label-radius" for="radius-slider" data-i18n="list.radius">Radius:</label>
           <input type="range" id="radius-slider" min="1" max="250" value="16" step="1">
@@ -114,7 +114,7 @@
         </div>
       </div>
 
-      <div id="view-radar" class="view">
+      <div id="view-radar" class="view active">
         <div id="radar-map"></div>
         <div id="radar-overlay">
           <div id="radar-controls">
@@ -238,11 +238,11 @@
     </main>
 
     <nav id="bottom-nav">
-      <button class="nav-btn active" data-view="list" data-i18n="nav.list" data-i18n-title="nav.list" title="List">
+      <button class="nav-btn" data-view="list" data-i18n="nav.list" data-i18n-title="nav.list" title="List">
         <svg viewBox="0 0 24 24" aria-hidden="true"><use href="icons.svg#icon-list"/></svg>
         <span>List</span>
       </button>
-      <button class="nav-btn" data-view="radar" data-i18n="nav.radar" data-i18n-title="nav.radar" title="Radar">
+      <button class="nav-btn active" data-view="radar" data-i18n="nav.radar" data-i18n-title="nav.radar" title="Radar">
         <svg viewBox="0 0 24 24" aria-hidden="true"><use href="icons.svg#icon-radar"/></svg>
         <span>Radar</span>
       </button>
