@@ -100,6 +100,11 @@ object OpenSkyService {
                 }
                 return OpenSkyTrack(trail = trail, creditsRemaining = creditsRemaining)
             }
+            if (status == 404) {
+                conn.disconnect()
+                lastError = null
+                return OpenSkyTrack(creditsRemaining = creditsRemaining)
+            }
             conn.disconnect()
             lastError = "HTTP $status"
         } catch (e: Exception) {

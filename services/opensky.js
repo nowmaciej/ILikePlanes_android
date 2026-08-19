@@ -58,6 +58,8 @@ async function fetchTrack(hex, token) {
               parsed._creditsRemaining = resp.headers['x-rate-limit-remaining'] || null;
               resolve(parsed);
             } catch(e) { reject(new Error('Invalid JSON')); }
+          } else if (resp.statusCode === 404) {
+            resolve({ path: null, _creditsRemaining: resp.headers['x-rate-limit-remaining'] || null });
           } else { reject(new Error(`HTTP ${resp.statusCode}`)); }
         });
       });

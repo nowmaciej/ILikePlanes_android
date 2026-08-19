@@ -1270,6 +1270,7 @@ async function updateRadarRoute() {
     const openskyUrl = `/api/opensky-track/${f.hex}?client_id=${encodeURIComponent(state.openskyClientId)}&client_secret=${encodeURIComponent(state.openskyClientSecret)}`;
     const data = await fetchJSON(openskyUrl);
     if (data.error) {
+      console.error('[OpenSky]', data.error);
       state.openskyError = data.error;
       displayCachedCredits();
       return;
@@ -1286,6 +1287,7 @@ async function updateRadarRoute() {
       }).addTo(layer);
     }
   } catch (e) {
+    console.error('[OpenSky]', e.message || 'network_error');
     state.openskyError = e.message || 'network_error';
     displayCachedCredits();
   }

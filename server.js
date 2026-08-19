@@ -119,7 +119,7 @@ app.get('/api/opensky-track/:hex', async (req, res) => {
   const clientId = req.query.client_id || '';
   const clientSecret = req.query.client_secret || '';
   const token = await opensky.getToken(clientId, clientSecret);
-  if (!token) return res.json({ trail: [], error: 'no_token' });
+  if (!token) { console.error('[OpenSky] no_token'); return res.json({ trail: [], error: 'no_token' }); }
   const result = await opensky.fetchTrack(req.params.hex, token);
   res.json(result);
 });
