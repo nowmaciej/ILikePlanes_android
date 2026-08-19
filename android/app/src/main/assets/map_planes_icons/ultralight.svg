@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <!-- Delta wing -->
+  <path fill="#2C3E50" d="M25 6 L3 30 L8 33 L25 20 L42 33 L47 30 Z" />
+  <!-- Trike frame & propeller at back -->
+  <line x1="25" y1="20" x2="25" y2="42" stroke="#2C3E50" stroke-width="2.5"/>
+  <line x1="25" y1="32" x2="16" y2="40" stroke="#2C3E50" stroke-width="2"/>
+  <line x1="25" y1="32" x2="34" y2="40" stroke="#2C3E50" stroke-width="2"/>
+  <circle cx="25" cy="27" r="3" fill="#2C3E50"/>
+  <circle cx="16" cy="40" r="2" fill="#2C3E50"/>
+  <circle cx="34" cy="40" r="2" fill="#2C3E50"/>
+  <circle cx="25" cy="42" r="2" fill="#2C3E50"/>
+</svg>

@@ -507,6 +507,7 @@ body {
 .rsb-route .rsb-route-icao { font-weight:700; font-family:var(--font-mono); color:var(--fg); }
 .rsb-route .rsb-route-city { font-size:10px; color:var(--fg3); }
 .rsb-route .rsb-route-arrow { color:var(--accent); font-size:14px; }
+.rsb-route-plane { height:18px; width:auto; filter:var(--accent); }
 .rsb-grid {
   display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:12px;
 }

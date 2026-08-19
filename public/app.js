@@ -80,9 +80,10 @@ function createPlaneIcon(f, selected) {
   const iconId = getCategoryIcon(f.category);
   const color = selected ? 'var(--danger)' : 'var(--accent)';
   const size = selected ? 33 : 24;
+  const rotate = NON_ROTATING_ICONS.has(iconId) ? 0 : (f.track || 0);
   return L.divIcon({
     className: `radar-plane${selected ? ' radar-plane-selected' : ''}`,
-    html: `<svg class="radar-plane-icon map-icon" width="${size}" height="${size}" viewBox="0 0 24 24" style="color:${color};transform:rotate(${f.track||0}deg);transition:transform .5s, color .3s;${selected ? 'filter:drop-shadow(0 0 6px var(--danger));' : ''}"><use href="icons.svg#${iconId}"/></svg>`,
+    html: `<img src="map_planes_icons/${iconId}.svg" width="${size}" height="${size}" style="transform:rotate(${rotate}deg);transition:transform .5s;${selected ? 'filter:drop-shadow(0 0 6px var(--danger));' : ''}">`,
     iconSize: [size, size],
     iconAnchor: [size/2, size/2]
   });
@@ -829,9 +830,47 @@ function decodeCategory(cat) {
 }
 
 function getCategoryIcon(cat) {
-  if (!cat) return 'cat-a2';
+  if (!cat) return 'small_light_aircraft';
   const key = typeof cat === 'number' ? `A${cat}` : cat;
-  return `cat-${key.toLowerCase()}`;
+  return MAP_ICON_MAP[key] || 'small_light_aircraft';
+}
+
+const MAP_ICON_MAP = {
+  A1: 'surface_ground_vehicle', D1: 'surface_ground_vehicle',
+  S1: 'surface_ground_vehicle', S2: 'surface_ground_vehicle', S3: 'surface_ground_vehicle',
+  A7: 'helicopter', C4: 'helicopter', L5: 'helicopter',
+  A6: 'heavy_wide_body_airliner',
+  A4: 'large_jet', C2: 'large_jet',
+  A5: 'high_vortex',
+  A3: 'medium_aircraft', B4: 'drop_plane',
+  C3: 'medium_aircraft', L2: 'medium_aircraft', L4: 'medium_aircraft',
+  A2: 'small_light_aircraft', B1: 'glider', L1: 'small_light_aircraft',
+  L3: 'seaplane', L6: 'glider',
+  B2: 'balloon', C6: 'balloon', L7: 'balloon',
+  B3: 'parachutist',
+  B5: 'ultralight', C1: 'small_light_aircraft', C5: 'glider'
+};
+const NON_ROTATING_ICONS = new Set(['surface_ground_vehicle', 'balloon', 'parachutist']);
+
+const ROUTE_ARROW_MAP = {
+  A1: 'Surface Ground Vehicle.png', D1: 'Surface Ground Vehicle.png',
+  S1: 'Surface Ground Vehicle.png', S2: 'Surface Ground Vehicle.png', S3: 'Surface Ground Vehicle.png',
+  A7: 'Helicopter.png', C4: 'Helicopter.png', L5: 'Helicopter.png',
+  A6: 'Heavy Wide-Body Airliner.png',
+  A4: 'Large Jet.png', C2: 'Large Jet.png',
+  A5: 'High Vortex.png',
+  A3: 'Medium Aircraft.png', B4: 'Medium Aircraft.png',
+  C3: 'Medium Aircraft.png', L2: 'Medium Aircraft.png', L4: 'Medium Aircraft.png',
+  A2: 'Small Light Aircraft.png', B1: 'Small Light Aircraft.png', B2: 'Small Light Aircraft.png',
+  B3: 'Small Light Aircraft.png', B5: 'Small Light Aircraft.png',
+  C1: 'Small Light Aircraft.png', C5: 'Small Light Aircraft.png', C6: 'Small Light Aircraft.png',
+  L1: 'Small Light Aircraft.png', L3: 'Small Light Aircraft.png',
+  L6: 'Small Light Aircraft.png', L7: 'Small Light Aircraft.png'
+};
+function getCategoryRouteArrow(cat) {
+  if (!cat) return 'Small Light Aircraft.png';
+  const key = typeof cat === 'number' ? `A${cat}` : cat;
+  return ROUTE_ARROW_MAP[key] || 'Small Light Aircraft.png';
 }
 
 function applyRadiusFilter() {
@@ -1135,9 +1174,10 @@ function showRadarSidebar(f) {
   const fromName = routeDisplay?.origin?.name || f.origin?.name || fromIcao || '---';
   const toIcao = routeDisplay?.destination?.icao || f.destination?.icao || '';
   const toName = routeDisplay?.destination?.name || f.destination?.name || toIcao || '---';
+  const routeArrowImg = getCategoryRouteArrow(f.category);
   routeEl.innerHTML = `
     <div class="rsb-route-from"><span class="rsb-route-icao">${fromIcao || '---'}</span><span class="rsb-route-city">${fromName}</span></div>
-    <span class="rsb-route-arrow">\u2708\uFE0F \u2192</span>
+    <span class="rsb-route-arrow"><img src="route_arrow/${routeArrowImg}" alt="" class="rsb-route-plane"></span>
     <div class="rsb-route-to"><span class="rsb-route-icao">${toIcao || '---'}</span><span class="rsb-route-city">${toName}</span></div>
   `;
 
@@ -1414,9 +1454,10 @@ function initDetailRouteMap(f) {
 
     if (f.lat && f.lon) {
       const iconId = getCategoryIcon(f.category);
+      const rotate = NON_ROTATING_ICONS.has(iconId) ? 0 : (f.track || 0);
       const planeIcon = L.divIcon({
         className:'plane-marker',
-        html:`<svg class="map-icon" width="30" height="30" viewBox="0 0 24 24" aria-hidden="true" style="color:var(--accent);transform:rotate(${f.track || 0}deg)"><use href="icons.svg#${iconId}"/></svg>`
+        html:`<img src="map_planes_icons/${iconId}.svg" width="30" height="30" style="transform:rotate(${rotate}deg)">`
       });
       L.marker([f.lat, f.lon], { icon:planeIcon }).addTo(state.detailMap);
     }

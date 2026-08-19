@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <!-- Pontoons/Floats -->
+  <rect x="11" y="8" width="4" height="34" rx="2" fill="#2C3E50"/>
+  <rect x="35" y="8" width="4" height="34" rx="2" fill="#2C3E50"/>
+  <!-- Struts -->
+  <line x1="13" y1="23" x2="37" y2="23" stroke="#2C3E50" stroke-width="2"/>
+  <line x1="13" y1="35" x2="37" y2="35" stroke="#2C3E50" stroke-width="2"/>
+  <!-- Plane body -->
+  <path fill="#2C3E50" d="M25 4 C23 4 23 12 23 21 L5 22 C4 22 4 24 5 24.5 L23 24 L23 40 L16 43.5 L16 46 L25 44 L34 46 L34 43.5 L27 40 L27 24 L45 24.5 C46 24 46 22 45 22 L27 21 C27 12 27 4 25 4 Z" />
+</svg>
