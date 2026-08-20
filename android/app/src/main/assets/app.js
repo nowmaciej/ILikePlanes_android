@@ -85,7 +85,7 @@ function applySvgColor(svgText, color) {
   return svgText.replace(/currentColor/g, color);
 }
 async function preloadSvgIcons() {
-  const icons = ['balloon','drop_plane','glider','heavy_wide_body_airliner','helicopter','high_vortex','large_jet','lighter_than_air','medium_aircraft','military_fighter_jet','parachutist','seaplane','small_light_aircraft','surface_ground_vehicle','tilt_rotor','ultralight'];
+  const icons = ['unknown','balloon','drop_plane','glider','heavy_wide_body_airliner','helicopter','high_vortex','large_jet','lighter_than_air','medium_aircraft','military_fighter_jet','parachutist','seaplane','small_light_aircraft','surface_ground_vehicle','tilt_rotor','ultralight'];
   await Promise.all(icons.map(async name => {
     try {
       const res = await fetch(`map_planes_icons/${name}.svg`);
@@ -700,6 +700,10 @@ function applyNativePosition(lat, lon) {
   updateLocationDisplay();
   updateCompassVisibility();
   if (state.map) {
+    if (!state._mapCentered) {
+      state.map.setView([lat, lon], Math.max(state.map.getZoom(), 10));
+      state._mapCentered = true;
+    }
     if (state.myLocationMarker) state.myLocationMarker.setLatLng([lat, lon]);
     else createMyLocationMarker();
     if (state.radarCircle) state.radarCircle.setLatLng([lat, lon]);
@@ -828,6 +832,11 @@ function calcElevation(altFt, distKm) {
   return radToDeg(Math.atan2(altKm, distKm));
 }
 
+function formatTypeCode(code) {
+  if (!code || code.includes('_')) return t('category.unknown') || '---';
+  return code;
+}
+
 function decodeCategory(cat) {
   if (!cat) return '';
   const categories = {
@@ -849,9 +858,9 @@ function decodeCategory(cat) {
 }
 
 function getCategoryIcon(cat) {
-  if (!cat) return 'small_light_aircraft';
+  if (!cat) return 'unknown';
   const key = typeof cat === 'number' ? `A${cat}` : cat;
-  return MAP_ICON_MAP[key] || 'small_light_aircraft';
+  return MAP_ICON_MAP[key] || 'unknown';
 }
 
 const MAP_ICON_MAP = {
@@ -1200,7 +1209,7 @@ function showRadarSidebar(f) {
     <div class="rsb-route-to"><span class="rsb-route-icao">${toIcao || '---'}</span><span class="rsb-route-city">${toName}</span></div>
   `;
 
-  document.getElementById('rsb-type').textContent = f.t || '---';
+  document.getElementById('rsb-type').textContent = formatTypeCode(f.t);
   document.getElementById('rsb-reg').textContent = f.r || '---';
   document.getElementById('rsb-alt').textContent = formatAltitude(f.alt_baro, state.units);
   document.getElementById('rsb-speed').textContent = formatSpeed(f.gs, state.units);
@@ -1401,7 +1410,7 @@ function updateDetailPanel(f) {
   const airline = getAirlineInfo(f);
   document.getElementById('detail-callsign').textContent = getFlightCallsign(f);
   document.getElementById('detail-airline').textContent = airline.name;
-  document.getElementById('detail-type').textContent = f.t || '---';
+  document.getElementById('detail-type').textContent = formatTypeCode(f.t);
   document.getElementById('detail-reg').textContent = f.r || '---';
   document.getElementById('detail-alt').textContent = formatAltitude(f.alt_baro, state.units);
   document.getElementById('detail-speed').textContent = formatSpeed(f.gs, state.units);
