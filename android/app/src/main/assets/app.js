@@ -1263,6 +1263,7 @@ function hideRadarSidebar() {
   document.getElementById('radar-sidebar').classList.add('hidden');
   highlightRadarMarker(prevHex, null);
   clearRadarRoute();
+  state.layerTrails?.clearLayers();
   renderFlightList();
 }
 
@@ -1553,7 +1554,7 @@ function updateRadarMap() {
         icon: createPlaneIcon(f, isSelected),
         zIndexOffset: isSelected ? 1000000 : 0
       }).addTo(state.layerPlanes);
-      marker.on('click', () => selectFlight(f));
+      marker.on('click', (e) => { L.DomEvent.stopPropagation(e); selectFlight(f); });
       state.radarMarkers[f.hex] = marker;
     }
 
