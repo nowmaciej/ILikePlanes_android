@@ -1087,7 +1087,7 @@ function renderFlightList() {
     row.appendChild(routeTd);
 
     row.appendChild(h('td', { text: airline.name }));
-    row.appendChild(h('td', { text: f.t || '---', title: f.t }));
+    row.appendChild(h('td', { text: formatTypeCode(f.t) }));
     row.appendChild(h('td', { text: f._categoryLabel || '---' }));
     row.appendChild(h('td', { class:'alt-cell', html: `<span class="alt-arrow alt-${altDir}">${arrowChar}</span> ${formatAltitude(f.alt_baro, state.units)}` }));
     row.appendChild(h('td', { class:'speed-cell', text: formatSpeed(f.gs, state.units) }));

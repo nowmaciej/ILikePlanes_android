@@ -181,7 +181,7 @@
     "tierStandard": "Standardowy"
   },
   "category": {
-    "noInfo": "No info",
+    "noInfo": "---",
     "surface": "Surface",
     "light": "Light",
     "small": "Small",
